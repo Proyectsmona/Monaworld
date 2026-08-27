@@ -7,5 +7,5 @@
   "durable_objects":{"bindings":[{"name":"OVERLAY_ROOM","class_name":"OverlayRoom"}]},
   "migrations":[{"tag":"v1","new_sqlite_classes":["OverlayRoom"]}],
   "d1_databases":[{"binding":"DB","database_name":"monaworld","database_id":"b6adc942-87de-4331-b747-6e6483b72f12"}],
-  "vars":{"APP_ORIGIN":"https://monaworld.pages.dev","UC_PER_UNIT":"100"}
+  "vars":{"APP_ORIGIN":"https://monaworld.lamonachinajuega.workers.dev/","UC_PER_UNIT":"100"}
 }
