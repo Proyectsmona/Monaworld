@@ -1,21 +1,24 @@
-# MonaWorld Cloudflare MVP
+# MonaWorld
 
-Estructura lista para GitHub + Cloudflare Workers.
+Unified creator dashboard prototype for Twitch, YouTube, Kick and TikTok LIVE.
 
-## Archivos públicos
-- public/index.html
-- public/styles.css
-- public/app.js
-- public/overlay.html
-- public/overlay.css
+## Deploy
+1. Create/apply D1 schema: `npx wrangler d1 execute monaworld --remote --file=schema.sql`
+2. Cloudflare Workers Builds: build command `bun install`; deploy command `npx wrangler deploy` (NOT `wrangler versions upload`).
+3. Keep `wrangler.json` in the repository root.
+4. Open the worker URL.
 
-## Backend
-- src/index.ts
-- migrations/0001_init.sql
-- wrangler.jsonc
+## Demo accounts
+- admin: `lamonachinajuega` / `Monatest1234`
+- moderator: `moderadormona` / `modtest1234`
 
-## Cloudflare
-Worker: monaworld
-D1: monaworld
+Change these passwords before any public/production deployment.
 
-El primer deploy con Durable Object debe hacerse con `npx wrangler deploy`, no `npx wrangler versions upload`.
+The platform connectors are intentionally demo-ready. Real OAuth/EventSub/webhook credentials must be added server-side.
+
+
+## v3 additions
+- Public landing page is the login screen.
+- PayPal support section for lamonachinajuega@gmail.com. Replace the prototype URL with the official PayPal-generated donation/checkout link before production.
+- MonaWorld Pro subscription and MonaProyect/MonaClips product sections are included as storefront prototype UI.
+- Real subscription/product payments require a payment provider checkout plus server-side webhooks and entitlement records.

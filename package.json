@@ -1,8 +1,2 @@
 {
-  "name":"vtuber-unified",
-  "version":"0.1.0",
-  "private":true,
-  "type":"module",
-  "scripts":{"dev":"wrangler dev","deploy":"wrangler deploy","db:migrate":"wrangler d1 migrations apply DB --local","db:migrate:remote":"wrangler d1 migrations apply DB --remote"},
-  "devDependencies":{"wrangler":"^4.35.0"}
-}
+  "name":"monaworld","private":true,"type":"module","scripts":{"dev":"wrangler dev","deploy":"wrangler deploy"},"devDependencies":{"wrangler":"^4.126.0","typescript":"^5.8.3"}}
