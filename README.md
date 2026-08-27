@@ -1,21 +1,16 @@
-# MonaWorld Cloudflare MVP
+# MonaWorld v6
+Cloudflare Workers + Assets + D1 + Durable Object OverlayRoom.
 
-Estructura lista para GitHub + Cloudflare Workers.
+Workers Builds:
+- Build: `bun install`
+- Deploy: `npx wrangler deploy`
 
-## Archivos públicos
-- public/index.html
-- public/styles.css
-- public/app.js
-- public/overlay.html
-- public/overlay.css
+Important: use `wrangler deploy`, not `wrangler versions upload`, because the Worker has a Durable Object migration.
 
-## Backend
-- src/index.ts
-- migrations/0001_init.sql
-- wrangler.jsonc
+D1 schema: `npx wrangler d1 execute monaworld --remote --file=./schema.sql`
 
-## Cloudflare
-Worker: monaworld
-D1: monaworld
+Demo-only frontend accounts:
+- ADMIN: lamonachinajuega / Monatest1234
+- MODERATOR_ADMIN: moderadormona / modtest1234
 
-El primer deploy con Durable Object debe hacerse con `npx wrangler deploy`, no `npx wrangler versions upload`.
+Replace these with server-side hashed accounts before production. Never commit OAuth/API secrets.
