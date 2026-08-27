@@ -24,7 +24,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "vtuber-unified",
+      "database_name": "monaworld",
       "database_id": "b6adc942-87de-4331-b747-6e6483b72f12"
     }
   ],
