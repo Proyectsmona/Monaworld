@@ -29,7 +29,7 @@
     }
   ],
   "vars": {
-    "APP_ORIGIN": "https://monaworld.<tu-subdominio>",
+    "APP_ORIGIN": "https://monaworld.lamonachinajuega.workers.dev/",
     "UC_PER_UNIT": "100"
   }
 }
