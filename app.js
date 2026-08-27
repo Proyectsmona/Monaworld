@@ -1,0 +1,13 @@
+const titles={home:'Overview',overlay:'Overlay Studio',alerts:'Alerts',events:'Events & Actions',commands:'Commands',music:'Music',stickers:'Stickers',coins:'Rewards & UC',connections:'Platforms',analytics:'Analytics',settings:'Settings'};
+const hero={home:'Control Center'};
+function switchView(id){document.querySelector(`[data-view="${id}"]`)?.click()}
+document.querySelectorAll('.nav').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(btn.dataset.view).classList.add('active');document.getElementById('title').textContent=titles[btn.dataset.view];document.getElementById('hero-title').innerHTML=(hero[btn.dataset.view]||titles[btn.dataset.view])+' <span>✦</span>';}));
+let dragging=null,ox=0,oy=0;
+function wire(){document.querySelectorAll('.el').forEach(el=>{el.onmousedown=e=>{dragging=el;ox=e.clientX-el.getBoundingClientRect().left;oy=e.clientY-el.getBoundingClientRect().top;e.preventDefault();}})}
+document.getElementById('canvas').addEventListener('mousemove',e=>{if(!dragging)return;const r=document.getElementById('canvas').getBoundingClientRect();dragging.style.left=Math.max(0,Math.min(96,(e.clientX-r.left-ox)/r.width*100))+'%';dragging.style.top=Math.max(0,Math.min(94,(e.clientY-r.top-oy)/r.height*100))+'%'});
+document.addEventListener('mouseup',()=>dragging=null);
+function addElement(type){const c=document.getElementById('canvas'),d=document.createElement('div');d.className='el '+type+'-el';d.dataset.type=type;d.style.left='45%';d.style.top='40%';d.innerHTML=({alert:'✦ ALERTA ✦<small>{user} · {amount} UC</small>',chat:'CHAT<div class="fake-chat">Nuevo chat</div>',goal:'META · 72%',music:'♫ NOW PLAYING',sticker:'✧ STICKER',text:'TEXTO'})[type];c.appendChild(d);wire()}
+function saveLayout(){localStorage.setItem('vu_layout_neon',document.getElementById('canvas').innerHTML);alert('Layout guardado en este prototipo.')}
+function resetLayout(){localStorage.removeItem('vu_layout_neon');location.reload()}
+function copyOverlayUrl(){navigator.clipboard?.writeText(location.origin+location.pathname.replace('index.html','')+'overlay.html?id=NYX-7F32');alert('URL de OBS copiada (demo).')}
+const saved=localStorage.getItem('vu_layout_neon');if(saved)document.getElementById('canvas').innerHTML=saved;wire();
