@@ -3,164 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VTuber Unified — Neon Dashboard</title>
-<link rel="stylesheet" href="styles.css">
+<title>MonaWorld — VTuber Unified</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#08060e;color:#f7f4ff}
+body{overflow-x:hidden;background:radial-gradient(circle at 28% 0%,#962c7750,transparent 30%),radial-gradient(circle at 100% 15%,#6f36ff33,transparent 28%),#08060e}
+.app{min-height:100vh;display:flex}.side{position:fixed;inset:0 auto 0 0;width:258px;padding:20px 15px;background:#0b0812f4;border-right:1px solid #2b2238;z-index:10;backdrop-filter:blur(16px)}
+.logo{display:flex;gap:8px;align-items:center;padding:5px 9px 20px;color:#ff68bc}.logo b{font-size:13px;letter-spacing:1.5px;color:#fff}.logo span{font-size:8px;letter-spacing:2px;color:#8c8297}
+.profile{display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #2b233a;background:#130f1c;border-radius:12px}.avatar{width:35px;height:35px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#ff4fac,#8247f7);font-weight:900}.profile b{display:block;font-size:10px}.profile small{font-size:8px;color:#766d80}
+nav{display:grid;gap:4px;margin-top:20px}.nav{border:1px solid transparent;background:none;color:#aaa2b1;text-align:left;border-radius:8px;padding:10px 11px;font-size:10px;cursor:pointer}.nav:hover{background:#15111e;color:#fff}.nav.active{background:#24132d;border-color:#4c2855;color:#fff;box-shadow:inset 2px 0 #ff5ab7}.cloud{position:absolute;bottom:18px;left:15px;right:15px;border:1px solid #2a2438;border-radius:10px;padding:10px;color:#67e9a7;font-size:9px;background:#110e18}.cloud small{color:#716a79}
+main{margin-left:258px;width:calc(100% - 258px);padding:28px 34px 50px}header,.actions,.top,.title-row,.ph{display:flex;justify-content:space-between;align-items:flex-start}header{margin-bottom:26px}header>div:first-child>small,.top>div>small,.title-row small,.metric>small,.ph small{font-size:8px;letter-spacing:2px;color:#80758e;font-weight:800}header h1{font-size:29px;margin:5px 0 2px}header p,.top p{font-size:11px;color:#766e80;margin:0}.actions{gap:8px}.ghost,.primary,.tile button{border:1px solid #352b44;background:#130f1c;color:#d4ccda;padding:10px 13px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer}.primary{background:linear-gradient(135deg,#ff4eac,#8347f4);border-color:#ff64ba;color:#fff;box-shadow:0 0 22px #ff47ac33}
+.view{display:none}.view.active{display:block}.hero-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px}.metric,.panel{background:linear-gradient(180deg,#17121f,#0f0c16);border:1px solid #292238;border-radius:14px}.metric{padding:17px;min-height:160px}.metric strong{display:block;font-size:32px;margin-top:18px}.metric em{display:block;color:#65e7a7;font-size:9px;font-style:normal;margin-top:4px}.wide{position:relative;overflow:hidden}.bars{height:43px;display:flex;align-items:flex-end;gap:4px;margin-top:12px}.bars i{flex:1;background:linear-gradient(#ff62bc,#8d48f4);border-radius:3px 3px 0 0}.icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px}.pink{color:#ff74c3;background:#36142e}.purple{color:#b298ff;background:#211743}.violet{color:#df80ff;background:#2b1638}
+.title-row{margin:27px 0 11px}.title-row h2,.ph h2,.top h2{margin:3px 0;font-size:18px}.platforms{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.platforms>div{display:flex;gap:9px;align-items:center;padding:12px;background:#120e19;border:1px solid #272038;border-radius:10px}.platforms b{width:30px;height:30px;display:grid;place-items:center;background:#21182e;border-radius:8px;color:#c19aff}.platforms span{font-size:10px}.platforms small{display:block;color:#756c80;font-size:8px;margin-top:3px}.platforms i{margin-left:auto;width:6px;height:6px;border-radius:50%;background:#65e9a8;box-shadow:0 0 10px #65e9a8}
+.split{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-top:12px}.panel{padding:17px}.feed{display:flex;align-items:center;gap:9px;border-top:1px solid #251f32;padding:12px 0;font-size:10px}.feed span{flex:1}.feed small{display:block;color:#706879;font-size:8px;margin-top:3px}.quick button{width:100%;border:1px solid #282137;background:#100c17;color:#eee;padding:11px;border-radius:9px;margin:6px 0;text-align:left;display:flex;gap:10px;align-items:center;font-size:15px}.quick button span{font-size:9px;flex:1}.quick small{display:block;color:#736a7e;font-size:7px;margin-top:2px}
+.editor{display:grid;grid-template-columns:170px 1fr 190px;gap:12px}.toolbox{display:flex;flex-direction:column;gap:6px}.toolbox h3,.props h3{font-size:9px;letter-spacing:2px;color:#8a8094;margin:0 0 4px}.toolbox button{border:1px solid #2b233a;background:#100c17;color:#c6bdce;padding:9px;border-radius:7px;text-align:left;font-size:9px;cursor:pointer}.toolbox hr{width:100%;border:0;border-top:1px solid #292338}.canvas{position:relative;width:100%;aspect-ratio:16/9;border:1px solid #362b46;border-radius:13px;overflow:hidden;background:#09070f;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:5% 5%}.el{position:absolute;z-index:2;padding:11px 14px;background:#1a1224cc;border:1px dashed #ff62ba;border-radius:9px;min-width:100px;text-align:center;font-size:9px;cursor:move;user-select:none}.el small{display:block;color:#9f95aa;font-size:7px;margin-top:4px}.chat{min-width:175px;text-align:left}.canvas-meta{color:#6e6676;font-size:7px;padding:7px 2px}.props label{display:block;color:#81788e;font-size:8px;margin:15px 0}.props input{display:block;width:100%;margin-top:6px;accent-color:#ff5cb6}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tile{padding:20px}.tile>span{font-size:7px;color:#ff72bf;letter-spacing:1px}.tile h3{font-size:14px;margin:10px 0 3px}.tile p{font-size:9px;color:#766e80}.tile strong{display:block;font-size:27px;margin:10px 0}.rules{padding:7px 17px}.rules>div{display:grid;grid-template-columns:44px 1.2fr auto 44px 1.6fr 25px;gap:8px;align-items:center;padding:15px 0;border-bottom:1px solid #251f32;font-size:9px}.rules b{font-size:7px;color:#6f6779;letter-spacing:1px}.table{padding:5px 16px}table{width:100%;border-collapse:collapse}th,td{padding:13px 6px;border-bottom:1px solid #251f32;text-align:left;font-size:9px}th{font-size:7px;color:#706879;letter-spacing:1px}.good{color:#67e8a8}.musicbox{display:flex;gap:15px;align-items:center}.cover{width:65px;height:65px;display:grid;place-items:center;border-radius:12px;background:radial-gradient(circle,#ff6abe,#7f47ef);font-size:22px}.musicbox h3{margin:5px 0;font-size:14px}.musicbox p{color:#756d80;font-size:9px}.sticker-grid,.connects{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.sticker-grid>div{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px;border:1px solid #2b2238;background:#120e19;border-radius:13px;font-size:32px}.sticker-grid b{font-size:10px}.sticker-grid small{color:#ff73bf;font-size:8px}.conn{display:grid;grid-template-columns:38px 1fr auto;gap:11px;align-items:center}.conn>b{width:36px;height:36px;display:grid;place-items:center;border-radius:9px;background:#241934;color:#c096ff}.conn h3{margin:0 0 3px;font-size:11px}.conn span{font-size:8px;color:#756e80}.conn strong{font-size:7px;color:#65e9a8}.conn .warn{color:#ff9e64}.graph{min-height:280px}.graphbars{height:230px;display:flex;align-items:flex-end;gap:12px}.graphbars i{flex:1;background:linear-gradient(#ff60bb,#7c45f2);border-radius:5px 5px 2px 2px}.settings{max-width:720px}.settings label{display:block;color:#81788e;font-size:8px;margin-bottom:15px}.settings input{display:block;width:100%;margin-top:6px;background:#0f0c16;color:#ddd;border:1px solid #2c243a;border-radius:8px;padding:11px}
+@media(max-width:1050px){.side{width:220px}main{margin-left:220px;width:calc(100% - 220px);padding:22px}.hero-grid{grid-template-columns:1fr 1fr}.platforms,.tiles,.sticker-grid{grid-template-columns:1fr 1fr}.editor{grid-template-columns:150px 1fr}.split{grid-template-columns:1fr}.connects{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.app{display:block}.side{position:static;width:100%}main{margin:0;width:100%}.hero-grid,.platforms,.tiles,.sticker-grid,.connects{grid-template-columns:1fr}header,.top{flex-direction:column;gap:12px}.editor{grid-template-columns:1fr}.rules>div{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<div class="ambient a1"></div><div class="ambient a2"></div>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">✦</div>
-      <div><b>VTUBER</b><span>UNIFIED</span></div>
-    </div>
+<div class="app"><aside class="side">
+<div class="logo">✦ <b>MONAWORLD</b><span>VTUBER UNIFIED</span></div>
+<div class="profile"><div class="avatar">M</div><div><b>MonaWorld</b><small>Workspace online</small></div></div>
+<nav>
+<button class="nav active" data-view="overview">⌂ Overview</button>
+<button class="nav" data-view="overlay">◈ Overlay Studio</button>
+<button class="nav" data-view="alerts">✦ Alerts</button>
+<button class="nav" data-view="events">⚡ Events & Actions</button>
+<button class="nav" data-view="commands">⌘ Commands</button>
+<button class="nav" data-view="music">♫ Music</button>
+<button class="nav" data-view="stickers">✧ Stickers</button>
+<button class="nav" data-view="rewards">◇ Rewards & UC</button>
+<button class="nav" data-view="platforms">◎ Platforms</button>
+<button class="nav" data-view="analytics">◌ Analytics</button>
+<button class="nav" data-view="settings">⚙ Settings</button>
+</nav><div class="cloud">● Cloud online<br><small>WebSocket ready</small></div>
+</aside>
+<main>
+<header><div><small>MONAWORLD / <b id="crumb">Overview</b></small><h1 id="heading">Control Center ✦</h1><p>Todo tu stream multicanal, en un solo lugar.</p></div><div class="actions"><button class="ghost" onclick="window.open('/overlay/demo','_blank')">Preview</button><button class="primary" onclick="copyUrl()">⌁ Copiar URL OBS</button></div></header>
 
-    <div class="profile">
-      <div class="avatar">V</div>
-      <div><div class="profile-name">Nyx Sakura</div><div class="profile-state"><i></i>Live ready</div></div>
-      <button class="dots">•••</button>
-    </div>
+<section id="overview" class="view active">
+<div class="hero-grid"><div class="metric wide"><small>UNIFIED ACTIVITY</small><strong id="events">1,284</strong><span style="font-size:9px;color:#746c7e">eventos hoy · +18.4%</span><div class="bars"><i style="height:28%"></i><i style="height:43%"></i><i style="height:35%"></i><i style="height:52%"></i><i style="height:45%"></i><i style="height:62%"></i><i style="height:58%"></i><i style="height:79%"></i><i style="height:69%"></i><i style="height:92%"></i><i style="height:81%"></i><i style="height:100%"></i></div></div>
+<div class="metric"><span class="icon pink">♥</span><small>SEGUIDORES</small><strong>428</strong><em>+32 hoy</em></div>
+<div class="metric"><span class="icon purple">★</span><small>SUBS / MEMBERS</small><strong>73</strong><em>+9 hoy</em></div>
+<div class="metric"><span class="icon violet">◆</span><small>UNIFIED COINS</small><strong id="uc">12,450</strong><em>+21%</em></div></div>
+<div class="title-row"><div><small>AT A GLANCE</small><h2>Tu ecosistema</h2></div></div>
+<div class="platforms"><div><b>T</b><span>Twitch<small>Connected</small></span><i></i></div><div><b>▶</b><span>YouTube<small>Connected</small></span><i></i></div><div><b>K</b><span>Kick<small>Connected</small></span><i></i></div><div><b>♪</b><span>TikTok LIVE<small>Bridge ready</small></span><i></i></div></div>
+<div class="split"><div class="panel"><div class="ph"><div><small>REAL-TIME</small><h2>Actividad reciente</h2></div></div><div id="feed"></div></div><div class="panel"><div class="ph"><div><small>SHORTCUTS</small><h2>Acciones rápidas</h2></div></div><div class="quick"><button onclick="go('overlay')">◈ <span><b>Editar overlay</b><small>Mueve y organiza tu canvas</small></span>→</button><button onclick="go('alerts')">✦ <span><b>Configurar alertas</b><small>Animaciones y sonidos</small></span>→</button><button onclick="go('events')">⚡ <span><b>Nueva automatización</b><small>Evento → condición → acción</small></span>→</button></div></div></div>
+</section>
 
-    <div class="nav-label">WORKSPACE</div>
-    <nav>
-      <button class="nav active" data-view="home"><span>⌂</span> Overview</button>
-      <button class="nav" data-view="overlay"><span>◈</span> Overlay Studio <em>NEW</em></button>
-      <button class="nav" data-view="alerts"><span>✦</span> Alerts</button>
-      <button class="nav" data-view="events"><span>⚡</span> Events & Actions</button>
-      <button class="nav" data-view="commands"><span>⌘</span> Commands</button>
-      <button class="nav" data-view="music"><span>♫</span> Music</button>
-      <button class="nav" data-view="stickers"><span>✧</span> Stickers</button>
-    </nav>
+<section id="overlay" class="view"><div class="top"><div><small>VISUAL BUILDER</small><h2>Overlay Studio</h2><p>Una Browser Source con todo tu layout para OBS.</p></div><button class="primary" onclick="saveLayout()">Guardar layout</button></div><div class="editor"><div class="panel toolbox"><h3>ELEMENTS</h3><button onclick="addEl('alert')">✦ Alerta</button><button onclick="addEl('chat')">☷ Chat</button><button onclick="addEl('goal')">◔ Meta</button><button onclick="addEl('music')">♫ Música</button><button onclick="addEl('sticker')">✧ Sticker</button><button onclick="addEl('text')">T Texto</button><hr><small>PRESETS</small><button>Neon Sakura</button><button>Minimal Stream</button><button>VTuber Full</button></div><div><div id="canvas" class="canvas"><div class="el alert" style="left:41%;top:10%">✦ ALERTA ✦<small>{user} · {amount} UC</small></div><div class="el chat" style="left:3%;top:67%">CHAT<small>Nyx, esa jugada 😭<br>Frank: LET'S GOOO<br>Luna: 💜💜💜</small></div><div class="el goal" style="left:77%;top:73%">META · 72%</div></div><div class="canvas-meta">1920 × 1080 · Grid 5% · Snap ON · Browser Source</div></div><div class="panel props"><h3>PROPERTIES</h3><label>Scale<input type="range" value="100"></label><label>Opacity<input type="range" value="100"></label><label>Duration<input type="number" value="5"></label></div></div></section>
 
-    <div class="nav-label">CREATOR</div>
-    <nav>
-      <button class="nav" data-view="coins"><span>◇</span> Rewards & UC</button>
-      <button class="nav" data-view="connections"><span>◎</span> Platforms</button>
-      <button class="nav" data-view="analytics"><span>◌</span> Analytics</button>
-    </nav>
+<section id="alerts" class="view"><div class="top"><div><small>ALERT SYSTEM</small><h2>Alerts</h2><p>Follows, subs, gifts, tips y eventos especiales.</p></div><button class="primary">+ Nueva alerta</button></div><div class="tiles"><div class="panel tile"><span>FOLLOW</span><h3>New Follower</h3><p>GIF + sonido · 4s</p><button>Editar</button></div><div class="panel tile"><span>SUB</span><h3>New Subscriber</h3><p>Animación + TTS · 5s</p><button>Editar</button></div><div class="panel tile"><span>SUPPORT</span><h3>Donation / Gift</h3><p>Escala por UC · dinámico</p><button>Editar</button></div></div></section>
 
-    <div class="nav-label">SYSTEM</div>
-    <nav>
-      <button class="nav" data-view="settings"><span>⚙</span> Settings</button>
-    </nav>
+<section id="events-view" class="view"></section>
+<section id="events" class="view"><div class="top"><div><small>AUTOMATION ENGINE</small><h2>Events & Actions</h2><p>Construye reglas sin código.</p></div><button class="primary">+ Nueva regla</button></div><div class="panel rules"><div><b>WHEN</b><span>Donation / Gift</span><strong>≥ 500 UC</strong><b>THEN</b><span>Alert + Sound + TTS</span><button>•••</button></div><div><b>WHEN</b><span>Follow</span><b>THEN</b><span>Follow animation</span><button>•••</button></div><div><b>WHEN</b><span>Sub / Member</span><b>THEN</b><span>Sub alert + +100 UC</span><button>•••</button></div></div></section>
 
-    <div class="side-bottom">
-      <div class="server-pill"><i></i><div><b>Cloud online</b><span>WebSocket stable</span></div></div>
-    </div>
-  </aside>
+<section id="commands" class="view"><div class="top"><div><small>CHAT AUTOMATION</small><h2>Commands</h2><p>Un mismo comando funciona en todas las plataformas.</p></div><button class="primary" onclick="newCommand()">+ Nuevo comando</button></div><div class="panel table"><table><thead><tr><th>Comando</th><th>Coste</th><th>Acción</th><th>Cooldown</th><th>Estado</th></tr></thead><tbody id="cmds"><tr><td><b>!dance</b></td><td>500 UC</td><td>Avatar animation</td><td>20s</td><td class="good">● activo</td></tr><tr><td><b>!song</b></td><td>100 UC</td><td>Add to queue</td><td>10s</td><td class="good">● activo</td></tr><tr><td><b>!bonk</b></td><td>250 UC</td><td>Alert + sound</td><td>15s</td><td class="good">● activo</td></tr></tbody></table></div></section>
 
-  <main>
-    <header>
-      <div>
-        <div class="crumb">Workspace / <b id="title">Overview</b></div>
-        <h1 id="hero-title">Control Center <span>✦</span></h1>
-        <p>Todo tu stream multicanal, en un solo lugar.</p>
-      </div>
-      <div class="header-actions">
-        <button class="ghost" onclick="window.open('overlay.html','_blank')">Preview</button>
-        <button class="primary" onclick="copyOverlayUrl()">⌁ Copiar URL de OBS</button>
-        <div class="live-switch"><i></i> LIVE</div>
-      </div>
-    </header>
+<section id="music" class="view"><div class="top"><div><small>MUSIC CONTROL</small><h2>Music</h2><p>Cola y solicitudes desde tus comandos.</p></div></div><div class="panel musicbox"><div class="cover">♫</div><div><small>NOW PLAYING</small><h3>Night Drive — Synthwave Mix</h3><p>Requested by Frank · 03:21</p></div><button class="ghost">❚❚</button></div></section>
 
-    <section id="home" class="view active">
-      <div class="hero-grid">
-        <div class="hero-card panel">
-          <div class="hero-card-head"><span class="eyebrow">UNIFIED ACTIVITY</span><span class="live-badge"><i></i> LIVE SYNC</span></div>
-          <div class="hero-number">1,284 <small>eventos hoy</small></div>
-          <div class="sparkline"><span style="height:22%"></span><span style="height:39%"></span><span style="height:31%"></span><span style="height:52%"></span><span style="height:48%"></span><span style="height:67%"></span><span style="height:61%"></span><span style="height:84%"></span><span style="height:74%"></span><span style="height:95%"></span><span style="height:81%"></span><span style="height:100%"></span></div>
-          <div class="hero-foot"><span>+18.4%</span><span>vs. stream anterior</span></div>
-        </div>
+<section id="stickers" class="view"><div class="top"><div><small>INTERACTIVE OVERLAY</small><h2>Stickers</h2><p>Elementos que el viewer puede activar.</p></div></div><div class="sticker-grid"><div>🐱<b>Cat Drop</b><small>250 UC</small></div><div>💜<b>Heart Burst</b><small>100 UC</small></div><div>🔥<b>Fire</b><small>500 UC</small></div><div>👻<b>Ghost</b><small>750 UC</small></div></div></section>
 
-        <div class="stat card"><div class="stat-icon pink">♥</div><div><small>Seguidores</small><strong>428</strong><span>+32 hoy</span></div></div>
-        <div class="stat card"><div class="stat-icon purple">★</div><div><small>Subs / Members</small><strong>73</strong><span>+9 hoy</span></div></div>
-        <div class="stat card"><div class="stat-icon violet">◆</div><div><small>Unified Coins</small><strong>12,450</strong><span>+21%</span></div></div>
-      </div>
+<section id="rewards" class="view"><div class="top"><div><small>UNIFIED ECONOMY</small><h2>Rewards & UC</h2><p>Unidad interna para acciones y automatizaciones.</p></div></div><div class="tiles"><div class="panel tile"><small>Saldo</small><strong id="uc2">12,450 UC</strong><p>Demo balance</p></div><div class="panel tile"><small>!dance</small><strong>500 UC</strong><p>Animación especial</p></div><div class="panel tile"><small>Top supporter</small><strong>Frank</strong><p>4,800 UC</p></div></div></section>
 
-      <div class="section-title"><div><span class="eyebrow">AT A GLANCE</span><h2>Tu ecosistema</h2></div><button class="mini">Ver actividad →</button></div>
-      <div class="platform-row">
-        <div class="platform-card"><div class="platform-logo twitch">T</div><div><b>Twitch</b><span>Connected · 312 viewers</span></div><i></i></div>
-        <div class="platform-card"><div class="platform-logo youtube">▶</div><div><b>YouTube</b><span>Connected · 184 viewers</span></div><i></i></div>
-        <div class="platform-card"><div class="platform-logo kick">K</div><div><b>Kick</b><span>Connected · 96 viewers</span></div><i></i></div>
-        <div class="platform-card"><div class="platform-logo tiktok">♪</div><div><b>TikTok LIVE</b><span>Bridge ready · 227 viewers</span></div><i></i></div>
-      </div>
+<section id="platforms" class="view"><div class="top"><div><small>MULTISTREAM</small><h2>Platforms</h2><p>Conecta cuentas y normaliza eventos.</p></div></div><div class="connects"><div class="panel conn"><b>T</b><span><h3>Twitch</h3>EventSub · OAuth</span><strong>READY</strong></div><div class="panel conn"><b>▶</b><span><h3>YouTube</h3>Live API · OAuth</span><strong>READY</strong></div><div class="panel conn"><b>K</b><span><h3>Kick</h3>Webhooks / API</span><strong>READY</strong></div><div class="panel conn"><b>♪</b><span><h3>TikTok LIVE</h3>Bridge / API</span><strong class="warn">BRIDGE</strong></div></div></section>
 
-      <div class="content-grid">
-        <div class="panel activity">
-          <div class="panel-head"><div><span class="eyebrow">REAL-TIME</span><h2>Actividad reciente</h2></div><button class="icon-btn">⋮</button></div>
-          <div class="activity-item"><div class="event-dot donation"></div><div><b>Frank</b> apoyó con <strong>500 UC</strong><span>Twitch · hace 8s</span></div><label>DONATION</label></div>
-          <div class="activity-item"><div class="event-dot follow"></div><div><b>Luna</b> comenzó a seguirte<span>TikTok · hace 24s</span></div><label>FOLLOW</label></div>
-          <div class="activity-item"><div class="event-dot sub"></div><div><b>Neo</b> se suscribió<span>YouTube · hace 42s</span></div><label>SUB</label></div>
-          <div class="activity-item"><div class="event-dot gift"></div><div><b>Kai</b> envió un Gift<span>Kick · hace 1m</span></div><label>GIFT</label></div>
-        </div>
+<section id="analytics" class="view"><div class="top"><div><small>INSIGHTS</small><h2>Analytics</h2><p>Actividad agregada.</p></div></div><div class="panel graph"><div class="graphbars"><i style="height:30%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:67%"></i><i style="height:58%"></i><i style="height:83%"></i><i style="height:73%"></i><i style="height:96%"></i></div></div></section>
 
-        <div class="panel quick">
-          <div class="panel-head"><div><span class="eyebrow">SHORTCUTS</span><h2>Acciones rápidas</h2></div></div>
-          <button onclick="switchView('overlay')"><span>◈</span><div><b>Editar overlay</b><small>Mueve y organiza tu canvas</small></div><strong>→</strong></button>
-          <button onclick="switchView('alerts')"><span>✦</span><div><b>Configurar alertas</b><small>Diseña animaciones y sonidos</small></div><strong>→</strong></button>
-          <button onclick="switchView('events')"><span>⚡</span><div><b>Crear automatización</b><small>Evento → condición → acción</small></div><strong>→</strong></button>
-        </div>
-      </div>
-    </section>
+<section id="settings" class="view"><div class="top"><div><small>WORKSPACE CONFIG</small><h2>Settings</h2><p>Configuración de workspace.</p></div></div><div class="panel settings"><label>Overlay URL<input id="overlay-url" readonly></label><button class="primary" onclick="copyUrl()">Copiar URL</button></div></section>
 
-    <section id="overlay" class="view">
-      <div class="section-head-row"><div><span class="eyebrow">VISUAL BUILDER</span><h2>Overlay Studio</h2><p>Diseña una única Browser Source para reducir complejidad en OBS.</p></div><div class="seg"><button class="on">Editor</button><button>Layers</button><button>Preview</button></div></div>
-      <div class="editor">
-        <div class="toolbox panel">
-          <h3>Elements</h3>
-          <button onclick="addElement('alert')"><span>✦</span> Alerta</button>
-          <button onclick="addElement('chat')"><span>☷</span> Chat</button>
-          <button onclick="addElement('goal')"><span>◔</span> Meta</button>
-          <button onclick="addElement('music')"><span>♫</span> Música</button>
-          <button onclick="addElement('sticker')"><span>✧</span> Sticker</button>
-          <button onclick="addElement('text')"><span>T</span> Texto</button>
-          <hr>
-          <div class="presets-label">LAYOUT PRESETS</div>
-          <button class="preset">✦ Neon Night</button>
-          <button class="preset">◉ Minimal Stream</button>
-          <button class="preset">◇ VTuber Full</button>
-        </div>
-        <div class="canvas-wrap">
-          <div id="canvas" class="canvas">
-            <div class="el alert-el" data-type="alert" style="left:40%;top:11%">✦ ALERTA ✦<small>{user} · {amount} UC</small></div>
-            <div class="el chat-el" data-type="chat" style="left:3%;top:67%">CHAT<div class="fake-chat">Nyx, esa jugada 😭<br>Frank: LET'S GOOO<br>Luna: 💜💜💜</div></div>
-            <div class="el goal-el" data-type="goal" style="left:77%;top:72%">META · 72%</div>
-            <div class="el music-el" data-type="music" style="left:41%;top:86%">♫ NOW PLAYING · Night Drive</div>
-          </div>
-          <div class="canvas-bottom"><span>1920 × 1080</span><span>Grid 5% · Snap ON</span><span>Browser Source ready</span></div>
-        </div>
-        <div class="properties panel">
-          <h3>Properties</h3>
-          <div class="selected-name">Alert component <span>●</span></div>
-          <label>Position X <input type="range" min="0" max="100" value="40"></label>
-          <label>Position Y <input type="range" min="0" max="100" value="11"></label>
-          <label>Scale <input type="range" min="50" max="150" value="100"></label>
-          <label>Opacity <input type="range" min="0" max="100" value="100"></label>
-          <label>Duration <input type="number" value="5"></label>
-          <button class="save" onclick="saveLayout()">Save layout</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="alerts" class="view"><div class="section-head-row"><div><span class="eyebrow">ALERT SYSTEM</span><h2>Alerts</h2><p>Centraliza follows, subs, gifts, tips y eventos especiales.</p></div><button class="primary">+ Nueva alerta</button></div><div class="cards3"><div class="panel big-item"><span class="tag pink">FOLLOW</span><h3>New Follower</h3><p>GIF + sonido · 4.0s</p><button>Editar</button></div><div class="panel big-item"><span class="tag purple">SUB</span><h3>New Subscriber</h3><p>Animación + TTS · 5.0s</p><button>Editar</button></div><div class="panel big-item"><span class="tag violet">SUPPORT</span><h3>Donation / Gift</h3><p>Escala por UC · dinámico</p><button>Editar</button></div></div></section>
-
-    <section id="events" class="view"><div class="section-head-row"><div><span class="eyebrow">AUTOMATION ENGINE</span><h2>Events & Actions</h2><p>Construye reglas sin código.</p></div><button class="primary">+ Nueva regla</button></div><div class="panel rules"><div class="rule"><b>WHEN</b><span>Donation / Gift</span><strong>≥ 500 UC</strong><b>THEN</b><span>Alert + Sound + TTS</span><button>•••</button></div><div class="rule"><b>WHEN</b><span>Follow</span><b>THEN</b><span>Follow animation</span><button>•••</button></div><div class="rule"><b>WHEN</b><span>Sub / Member</span><b>THEN</b><span>Sub alert + +100 UC</span><button>•••</button></div></div></section>
-
-    <section id="commands" class="view"><div class="section-head-row"><div><span class="eyebrow">CHAT AUTOMATION</span><h2>Commands</h2><p>Un mismo comando funciona en todas las plataformas conectadas.</p></div><button class="primary">+ Nuevo comando</button></div><div class="panel table-panel"><table><tr><th>Comando</th><th>Coste</th><th>Acción</th><th>Cooldown</th><th>Estado</th></tr><tr><td><b>!dance</b></td><td>500 UC</td><td>Avatar animation</td><td>20s</td><td><span class="on-dot">● activo</span></td></tr><tr><td><b>!song</b></td><td>100 UC</td><td>Add to queue</td><td>10s</td><td><span class="on-dot">● activo</span></td></tr><tr><td><b>!bonk</b></td><td>250 UC</td><td>Alert + sound</td><td>15s</td><td><span class="on-dot">● activo</span></td></tr></table></div></section>
-
-    <section id="music" class="view"><div class="section-head-row"><div><span class="eyebrow">MUSIC CONTROL</span><h2>Music</h2><p>Cola, solicitudes y acciones desde tus comandos.</p></div><button class="primary">+ Añadir canción</button></div><div class="panel music-panel"><div class="now-playing"><div class="cover">♫</div><div><span>NOW PLAYING</span><h3>Night Drive — Synthwave Mix</h3><small>Requested by Frank · 03:21</small></div><button>❚❚</button></div><div class="queue"><b>Up next</b><span>1. Neon City — Luna</span><span>2. Pixel Hearts — Kai</span><span>3. Midnight Run — Neo</span></div></div></section>
-
-    <section id="stickers" class="view"><div class="section-head-row"><div><span class="eyebrow">INTERACTIVE OVERLAY</span><h2>Stickers</h2><p>Elementos que el viewer puede activar sobre tu overlay.</p></div><button class="primary">+ Crear sticker</button></div><div class="sticker-grid"><div class="sticker-card">🐱<b>Cat Drop</b><span>250 UC</span></div><div class="sticker-card">💜<b>Heart Burst</b><span>100 UC</span></div><div class="sticker-card">🔥<b>Fire</b><span>500 UC</span></div><div class="sticker-card">👻<b>Ghost</b><span>750 UC</span></div></div></section>
-
-    <section id="coins" class="view"><div class="section-head-row"><div><span class="eyebrow">UNIFIED ECONOMY</span><h2>Rewards & UC</h2><p>Unidad interna para acciones, recompensas y automatizaciones.</p></div><button class="primary">Configurar</button></div><div class="cards3"><div class="panel big-stat"><small>Saldo</small><strong>12,450 UC</strong><span>+2,140 esta semana</span></div><div class="panel big-stat"><small>!dance</small><strong>500 UC</strong><span>Animación especial</span></div><div class="panel big-stat"><small>Top supporter</small><strong>Frank</strong><span>4,800 UC</span></div></div></section>
-
-    <section id="connections" class="view"><div class="section-head-row"><div><span class="eyebrow">MULTISTREAM</span><h2>Platforms</h2><p>Conecta tus cuentas y normaliza los eventos.</p></div><button class="primary">+ Conectar</button></div><div class="connections-grid"><div class="panel connection"><div class="platform-logo twitch">T</div><div><h3>Twitch</h3><span>EventSub · OAuth</span></div><b>CONNECTED</b></div><div class="panel connection"><div class="platform-logo youtube">▶</div><div><h3>YouTube</h3><span>Live API · OAuth</span></div><b>CONNECTED</b></div><div class="panel connection"><div class="platform-logo kick">K</div><div><h3>Kick</h3><span>Webhooks · OAuth</span></div><b>CONNECTED</b></div><div class="panel connection"><div class="platform-logo tiktok">♪</div><div><h3>TikTok LIVE</h3><span>Bridge / available API</span></div><b class="warn">BRIDGE</b></div></div></section>
-
-    <section id="analytics" class="view"><div class="section-head-row"><div><span class="eyebrow">INSIGHTS</span><h2>Analytics</h2><p>Eventos, apoyos y actividad de tu stream.</p></div></div><div class="panel chart-panel"><div class="chart-head"><span>Unified activity</span><b>Last 7 streams</b></div><div class="chart"><i style="height:30%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:67%"></i><i style="height:58%"></i><i style="height:83%"></i><i style="height:73%"></i><i style="height:96%"></i></div><div class="days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div></section>
-
-    <section id="settings" class="view"><div class="section-head-row"><div><span class="eyebrow">WORKSPACE CONFIG</span><h2>Settings</h2><p>Configura apariencia, conexiones y comportamiento.</p></div></div><div class="panel settings-panel"><label>Overlay URL <input value="https://tuweb.com/o/NYX-7F32" readonly></label><label>Idioma <select><option>Español</option><option>English</option></select></label><label>Theme <select><option>Neon Sakura</option><option>Midnight</option></select></label><button class="save">Guardar cambios</button></div></section>
-  </main>
-</div>
-<script src="app.js"></script>
-</body>
-</html>
+</main></div>
+<script>
+const titles={overview:"Overview",overlay:"Overlay Studio",alerts:"Alerts",events:"Events & Actions",commands:"Commands",music:"Music",stickers:"Stickers",rewards:"Rewards & UC",platforms:"Platforms",analytics:"Analytics",settings:"Settings"};
+function go(id){document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.view===id));document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id===id));document.getElementById("crumb").textContent=titles[id];document.getElementById("heading").innerHTML=(id==="overview"?"Control Center":titles[id])+" <span style='color:#ff5db8'>✦</span>"}
+document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
+function copyUrl(){const u=location.origin+"/overlay/demo";navigator.clipboard?.writeText(u);alert("URL de OBS:\\n"+u)}
+let dragging=null,dx=0,dy=0;
+function wire(){document.querySelectorAll("#canvas .el").forEach(el=>el.onmousedown=e=>{dragging=el;const r=el.getBoundingClientRect();dx=e.clientX-r.left;dy=e.clientY-r.top;e.preventDefault()})}
+document.getElementById("canvas").addEventListener("mousemove",e=>{if(!dragging)return;const r=canvas.getBoundingClientRect();dragging.style.left=Math.max(0,Math.min(96,(e.clientX-r.left-dx)/r.width*100))+"%";dragging.style.top=Math.max(0,Math.min(92,(e.clientY-r.top-dy)/r.height*100))+"%"});
+document.addEventListener("mouseup",()=>dragging=null);
+function addEl(t){const d=document.createElement("div");d.className="el "+t;d.style.left="45%";d.style.top="40%";d.innerHTML={alert:"✦ ALERTA ✦<small>{user} · {amount} UC</small>",chat:"CHAT<small>Nuevo mensaje...</small>",goal:"META · 72%",music:"♫ NOW PLAYING",sticker:"✧ STICKER",text:"TEXTO"}[t];canvas.appendChild(d);wire()}
+async function saveLayout(){const doc={canvas:{width:1920,height:1080},elements:[...document.querySelectorAll("#canvas .el")].map((e,i)=>({id:e.className.split(" ")[1]+"-"+i,type:e.className.split(" ")[1],x:e.offsetLeft,y:e.offsetTop,width:e.offsetWidth,height:e.offsetHeight}))};const r=await fetch("/api/overlay",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({userId:"demo",id:"demo-layout",name:"Neon Sakura",isDefault:true,document:doc})});alert(r.ok?"Layout guardado en D1.":"No se pudo guardar.")} 
+async function newCommand(){const name=prompt("Comando","!dance");if(!name)return;const cost=Number(prompt("Costo UC","500")||0);const r=await fetch("/api/commands",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({userId:"demo",name,costUC:cost,action:{type:"overlay_event"}})});if(r.ok){const tr=document.createElement("tr");tr.innerHTML=`<td><b>${name}</b></td><td>${cost} UC</td><td>Overlay event</td><td>20s</td><td class="good">● activo</td>`;document.getElementById("cmds").prepend(tr)}}
+function addFeed(e){const f=document.getElementById("feed"),d=document.createElement("div");d.className="feed";d.innerHTML=`<span><b>${e.actor?.name||"Viewer"}</b> · ${e.type}<small>${e.platform} · ahora · ${e.value?.uc||0} UC</small></span>`;f.prepend(d)}
+function connect(){const p=location.protocol==="https:"?"wss":"ws";const ws=new WebSocket(`${p}://${location.host}/ws?user=demo`);ws.onmessage=m=>{try{const x=JSON.parse(m.data);if(x.kind==="event")addFeed(x.event)}catch{}};ws.onclose=()=>setTimeout(connect,3000)}
+document.getElementById("overlay-url").value=location.origin+"/overlay/demo";wire();connect();
+</script>
+</body></html>
