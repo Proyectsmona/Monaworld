@@ -2,11 +2,16 @@
  * Hash de contraseña con PBKDF2-SHA256 vía WebCrypto.
  *
  * PBKDF2 es lo que Workers ofrece de forma nativa: Argon2 exigiría cargar un
- * módulo WASM en cada arranque en frío. Con un número de iteraciones alto es
- * suficiente para una aplicación de un solo usuario.
+ * módulo WASM en cada arranque en frío. Suficiente para una aplicación de un
+ * solo usuario.
+ *
+ * El tope de 100.000 iteraciones no es una elección: es el máximo que acepta
+ * `crypto.subtle` en Workers. Pedir más —OWASP recomienda 210.000 para
+ * PBKDF2-SHA256— falla en ejecución con `NotSupportedError`, y solo en
+ * producción, porque el runtime local no impone el límite.
  */
 
-const ITERATIONS = 210_000;
+const ITERATIONS = 100_000;
 const KEY_BITS = 256;
 const SALT_BYTES = 16;
 
@@ -21,7 +26,7 @@ function fromHex(hex: string): Uint8Array {
   return out;
 }
 
-async function derive(password: string, salt: Uint8Array): Promise<string> {
+async function derive(password: string, salt: Uint8Array, iterations: number): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(password),
@@ -30,7 +35,7 @@ async function derive(password: string, salt: Uint8Array): Promise<string> {
     ['deriveBits'],
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: salt as BufferSource, iterations: ITERATIONS },
+    { name: 'PBKDF2', hash: 'SHA-256', salt: salt as BufferSource, iterations },
     key,
     KEY_BITS,
   );
@@ -40,13 +45,19 @@ async function derive(password: string, salt: Uint8Array): Promise<string> {
 /** Formato almacenado: `pbkdf2$<iteraciones>$<salt hex>$<hash hex>`. */
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
-  return `pbkdf2$${ITERATIONS}$${toHex(salt.buffer)}$${await derive(password, salt)}`;
+  return `pbkdf2$${ITERATIONS}$${toHex(salt.buffer)}$${await derive(password, salt, ITERATIONS)}`;
 }
 
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [scheme, , saltHex, expected] = stored.split('$');
+  const [scheme, iterationsRaw, saltHex, expected] = stored.split('$');
   if (scheme !== 'pbkdf2' || !saltHex || !expected) return false;
-  return timingSafeEqual(await derive(password, fromHex(saltHex)), expected);
+
+  // Las iteraciones se leen del propio hash, no de la constante: así cambiarla
+  // no invalida las contraseñas ya guardadas con el valor anterior.
+  const iterations = Number.parseInt(iterationsRaw ?? '', 10);
+  if (!Number.isFinite(iterations) || iterations <= 0) return false;
+
+  return timingSafeEqual(await derive(password, fromHex(saltHex), iterations), expected);
 }
 
 /** Comparación en tiempo constante: no filtra el hash por temporización. */
