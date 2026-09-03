@@ -171,13 +171,25 @@ export const TWITCH_SUBSCRIPTIONS = [
   { type: 'channel.subscription.gift', version: '1', scope: 'channel:read:subscriptions' },
   { type: 'channel.cheer', version: '1', scope: 'bits:read' },
   { type: 'channel.raid', version: '1', scope: '' },
-  { type: 'channel.chat.message', version: '1', scope: 'user:read:chat' },
+  { type: 'channel.chat.message', version: '1', scope: 'user:read:chat user:bot channel:bot' },
 ] as const;
 
-/** Scopes OAuth. Ninguno permite publicar ni moderar: MonaWorld solo lee. */
+/**
+ * Scopes OAuth. MonaWorld solo lee: publicar en el chat exigiría
+ * `user:write:chat`, que no se pide nunca.
+ *
+ * `user:bot` y `channel:bot` no son un capricho ni sirven para escribir: Twitch
+ * los exige para `channel.chat.message` cuando la suscripción se crea con un
+ * app access token, que es obligatorio en el transporte por webhook. Sin ellos
+ * el alta devuelve 403 «subscription missing proper authorization» y los otros
+ * seis eventos se dan de alta con normalidad, así que el fallo pasa
+ * desapercibido salvo que se mire el informe por tipo.
+ */
 export const TWITCH_SCOPES = [
   'moderator:read:followers',
   'channel:read:subscriptions',
   'bits:read',
   'user:read:chat',
+  'user:bot',
+  'channel:bot',
 ] as const;

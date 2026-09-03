@@ -88,10 +88,15 @@ Antes hay que registrar la aplicación en cada plataforma:
 En Kick hay que configurar además la URL de webhook:
 `<APP_ORIGIN>/webhooks/kick`.
 
-Los scopes que se piden son solo de lectura. En Twitch:
+Los scopes que se piden son de lectura. En Twitch:
 `moderator:read:followers`, `channel:read:subscriptions`, `bits:read`,
-`user:read:chat`. En Kick: `user:read`, `channel:read`, `events:subscribe`.
-Ninguno permite publicar ni moderar.
+`user:read:chat`, `user:bot` y `channel:bot`. En Kick: `user:read`,
+`channel:read`, `events:subscribe`.
+
+Los dos últimos de Twitch llaman la atención, pero no otorgan escritura: Twitch
+los exige para leer el chat cuando la suscripción se crea con un app access
+token, que es lo que obliga el transporte por webhook. Publicar en el chat
+requeriría `user:write:chat`, y ese no se pide nunca.
 
 **YouTube** se autoriza desde la terminal, con el flujo loopback de aplicación
 de escritorio que exige Google:
@@ -161,9 +166,12 @@ sesión de un usuario, simulador, webhook de Twitch con firma HMAC real
 construcción de las URLs de autorización de Twitch y Kick con PKCE, guardas
 anti-CSRF del callback, panel y overlay.
 
-**Escrito y probado con fixtures, pendiente de credenciales reales:** el
-intercambio de código por tokens, el alta de suscripciones en Twitch y Kick, y
-los conectores de YouTube, TikTok y OBS del agente.
+**Verificado contra Twitch real:** el intercambio de código por tokens, el alta
+de las siete suscripciones de EventSub y la recepción de eventos firmados en el
+Worker desplegado.
+
+**Escrito y probado con fixtures, pendiente de credenciales reales:** el alta de
+suscripciones en Kick y los conectores de YouTube, TikTok y OBS del agente.
 
 **Pendiente:** editor visual de overlays, multi-chat, biblioteca de sonidos,
 empaquetado del agente como servicio.
