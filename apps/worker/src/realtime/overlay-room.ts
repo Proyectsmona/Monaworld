@@ -86,10 +86,17 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
     const role = url.searchParams.get('role') === 'panel' ? 'panel' : 'overlay';
     const { 0: client, 1: server } = new WebSocketPair();
 
+    // Un overlay de chat quiere el evento en crudo; el de alertas no. La
+    // etiqueta se toma de la URL y no de un mensaje posterior porque las
+    // etiquetas son lo único que sobrevive a la hibernación: un registro en
+    // memoria se perdería en cuanto el objeto se descargue a mitad de directo.
+    const tags = [role];
+    if (role === 'overlay' && url.searchParams.get('widget') === 'chat') tags.push('chat');
+
     // Hibernación: sin esto el objeto se queda cargado en memoria mientras haya
     // una fuente de OBS abierta, y se paga duración por cada hora de directo
     // aunque no ocurra nada.
-    this.ctx.acceptWebSocket(server, [role]);
+    this.ctx.acceptWebSocket(server, tags);
     server.send(JSON.stringify(await this.snapshot()));
 
     return new Response(null, { status: 101, webSocket: client });
@@ -112,9 +119,11 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
     const plan = planActions(rules, event, { cooldowns, clock: systemClock });
     await this.ctx.storage.put(KEYS.cooldowns, [...cooldowns.entries()]);
 
-    // El evento en crudo va solo al panel: el overlay no lo necesita y en un
-    // chat activo serían cientos de mensajes por minuto de tráfico inútil.
+    // El evento en crudo va al panel y a los overlays de chat, nunca al de
+    // alertas: en un chat activo serían cientos de mensajes por minuto de
+    // tráfico inútil hacia una fuente que solo pinta alertas.
     this.broadcast({ t: 'event', event }, 'panel');
+    this.broadcast({ t: 'event', event }, 'chat');
 
     const deltas = aggregateCounterDeltas(plan, event);
     const awarded = summariseAwards(deltas);
@@ -226,9 +235,9 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
    * Esto es lo que el prototipo no hacía: respondía solo a quien había escrito,
    * así que las fuentes de OBS se quedaban esperando para siempre.
    */
-  private broadcast(message: ServerMessage, onlyRole?: 'overlay' | 'panel'): void {
+  private broadcast(message: ServerMessage, onlyTag?: 'overlay' | 'panel' | 'chat'): void {
     const payload = JSON.stringify(message);
-    const sockets = onlyRole ? this.ctx.getWebSockets(onlyRole) : this.ctx.getWebSockets();
+    const sockets = onlyTag ? this.ctx.getWebSockets(onlyTag) : this.ctx.getWebSockets();
 
     for (const socket of sockets) {
       try {

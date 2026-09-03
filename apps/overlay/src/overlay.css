@@ -164,6 +164,76 @@ body {
   text-shadow: 0 0 34px rgba(255, 53, 184, 0.75);
 }
 
+/* ---------------------------------------------------------------- multichat */
+
+.stage-chat {
+  align-items: end;
+  padding: 12px;
+}
+
+/*
+ * La columna crece hacia abajo y se ancla al final: el mensaje nuevo aparece
+ * abajo, como en el chat nativo de cualquier plataforma. `justify-content: end`
+ * mantiene los primeros mensajes pegados al suelo cuando aún hay pocos, en vez
+ * de dejarlos flotando en mitad de la fuente.
+ */
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 6px;
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.chat-line {
+  padding: 7px 11px;
+  border-radius: 12px;
+  border-left: 3px solid var(--accent, var(--pink));
+  background: rgba(11, 7, 17, 0.72);
+  font-size: 16px;
+  line-height: 1.35;
+  /* Sin esto, un nombre largo sin espacios desbordaría la fuente en OBS. */
+  overflow-wrap: anywhere;
+  animation: chat-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.chat-who {
+  margin-right: 7px;
+  font-weight: 600;
+  color: var(--accent, var(--pink));
+}
+
+.chat-badge {
+  margin-right: 5px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--accent, var(--pink));
+  color: var(--ink);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  vertical-align: 2px;
+}
+
+.chat-text {
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes chat-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .is-entering,
   .is-leaving {
@@ -171,5 +241,8 @@ body {
   }
   .goal-fill {
     transition: none;
+  }
+  .chat-line {
+    animation: none;
   }
 }

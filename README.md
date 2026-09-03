@@ -173,5 +173,5 @@ Worker desplegado.
 **Escrito y probado con fixtures, pendiente de credenciales reales:** el alta de
 suscripciones en Kick y los conectores de YouTube, TikTok y OBS del agente.
 
-**Pendiente:** editor visual de overlays, multi-chat, biblioteca de sonidos,
-empaquetado del agente como servicio.
+**Pendiente:** editor visual de overlays, biblioteca de sonidos, empaquetado
+del agente como servicio.

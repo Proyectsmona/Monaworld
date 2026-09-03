@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ServerMessage } from '@monaworld/contracts';
+import type { StreamEvent } from '@monaworld/domain';
 
 interface ActiveAlert {
   id: string;
@@ -11,6 +12,13 @@ interface ActiveAlert {
   platform: string;
   avatarUrl?: string;
 }
+
+/**
+ * Tope de mensajes en pantalla. Un directo largo acumularía miles de nodos en
+ * una fuente de OBS que nadie recarga en seis horas, y el navegador incrustado
+ * termina consumiendo memoria hasta ahogar la escena.
+ */
+const MAX_MESSAGES = 40;
 
 const PLATFORM_COLOR: Record<string, string> = {
   twitch: '#a970ff',
@@ -36,6 +44,7 @@ export function Overlay() {
   const [leaving, setLeaving] = useState(false);
   const [counters, setCounters] = useState<Record<string, number>>({});
   const [connected, setConnected] = useState(false);
+  const [messages, setMessages] = useState<StreamEvent[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -46,7 +55,7 @@ export function Overlay() {
     const connect = () => {
       if (closed) return;
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const url = `${proto}//${location.host}/room/default/ws?role=overlay&t=${encodeURIComponent(token)}`;
+      const url = `${proto}//${location.host}/room/default/ws?role=overlay&t=${encodeURIComponent(token)}&widget=${encodeURIComponent(widget)}`;
       const ws = new WebSocket(url);
       socketRef.current = ws;
 
@@ -68,8 +77,15 @@ export function Overlay() {
           setAlert(msg as ActiveAlert);
         } else if (msg.t === 'state') {
           setCounters(msg.counters);
+        } else if (msg.t === 'event') {
+          // Solo mensajes con texto: un follow no pinta nada en una columna de
+          // chat, y la ingesta ya descarta los de chat vacíos.
+          if (msg.event.type === 'chat' && msg.event.message) {
+            setMessages((prev) => [...prev, msg.event].slice(-MAX_MESSAGES));
+          }
         } else if (msg.t === 'clear') {
           setAlert(null);
+          setMessages([]);
         }
       };
 
@@ -87,7 +103,7 @@ export function Overlay() {
       if (retry) clearTimeout(retry);
       socketRef.current?.close();
     };
-  }, [token]);
+  }, [token, widget]);
 
   // Ciclo de vida de una alerta: entra, se mantiene, sale, y avisa al hub.
   useEffect(() => {
@@ -113,6 +129,10 @@ export function Overlay() {
       clearTimeout(doneAt);
     };
   }, [alert]);
+
+  if (widget === 'chat') {
+    return <Chat messages={messages} connected={connected} />;
+  }
 
   if (widget === 'goal') {
     return <Goals counters={counters} />;
@@ -172,6 +192,46 @@ function Timer({ seconds }: { seconds: number }) {
       <div className="timer">
         {h > 0 && <>{pad(h)}:</>}
         {pad(m)}:{pad(s)}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Multi-chat: las cuatro plataformas en una sola columna.
+ *
+ * Recibe el evento en crudo, no una alerta, porque un mensaje de chat no pasa
+ * por la cola serial: se pintan todos a la vez y sin esperar turno. La sala
+ * solo se los manda a este widget, nunca al de alertas.
+ */
+function Chat({ messages, connected }: { messages: StreamEvent[]; connected: boolean }) {
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages]);
+
+  return (
+    <div className="stage stage-chat">
+      {!connected && <div className="offline">MonaWorld · sin conexión</div>}
+      <div className="chat-list">
+        {messages.map((event) => (
+          <div
+            key={event.id}
+            className="chat-line"
+            style={
+              { '--accent': PLATFORM_COLOR[event.platform] ?? '#ff35b8' } as React.CSSProperties
+            }
+          >
+            <span className="chat-who">
+              {event.actor.isMod && <span className="chat-badge" title="Moderador">MOD</span>}
+              {event.actor.displayName}
+            </span>
+            {/* Texto plano: el mensaje viene de una plataforma, nunca innerHTML. */}
+            <span className="chat-text">{event.message}</span>
+          </div>
+        ))}
+        <div ref={endRef} />
       </div>
     </div>
   );
