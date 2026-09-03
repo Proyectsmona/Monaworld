@@ -1,9 +1,45 @@
 {
+  "name": "monaworld",
+  "version": "7.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "build": "npm run build --workspace @monaworld/panel && npm run build --workspace @monaworld/overlay",
+    "dev": "wrangler dev",
+    "dev:panel": "npm run dev --workspace @monaworld/panel",
+    "dev:overlay": "npm run dev --workspace @monaworld/overlay",
+    "deploy": "npm run build && wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:local": "wrangler d1 migrations apply monaworld --local",
+    "db:remote": "wrangler d1 migrations apply monaworld --remote",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p apps/panel/tsconfig.json && tsc --noEmit -p apps/overlay/tsconfig.json && tsc --noEmit -p apps/agent/tsconfig.json",
+    "test": "vitest run",
+    "dev:agent": "npm run dev --workspace @monaworld/agent",
+    "agent:youtube-auth": "npm run youtube-auth --workspace @monaworld/agent",
+    "test:twitch": "node scripts/twitch-events.mjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "wrangler": "^4.126.0"
+    "@cloudflare/workers-types": "^5.20260827.1",
+    "@types/node": "^26.4.0",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.127.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.1": true,
+    "workerd@1.20260826.1": true
   }
 }

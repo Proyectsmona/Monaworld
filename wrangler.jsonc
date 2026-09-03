@@ -1,11 +1,17 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "monaworld",
-  "main": "src/index.ts",
+  "main": "apps/worker/src/index.ts",
   "compatibility_date": "2026-08-22",
+  "observability": { "enabled": true },
   "assets": {
+    // Generado por los builds de apps/panel y apps/overlay.
     "directory": "./public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // El panel es una SPA: cualquier ruta desconocida devuelve su index.html.
+    "not_found_handling": "single-page-application",
+    // Las rutas del Worker mandan sobre los ficheros estáticos.
+    "run_worker_first": ["/api/*", "/room/*", "/webhooks/*"]
   },
   "durable_objects": {
     "bindings": [
@@ -18,16 +24,15 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": [
-        "OverlayRoom"
-      ]
+      "new_sqlite_classes": ["OverlayRoom"]
     }
   ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "monaworld",
-      "database_id": "b6adc942-87de-4331-b747-6e6483b72f12"
+      "database_id": "b6adc942-87de-4331-b747-6e6483b72f12",
+      "migrations_dir": "migrations"
     }
   ],
   "vars": {

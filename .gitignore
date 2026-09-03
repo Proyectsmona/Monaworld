@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+*.local
+
+# generado por los builds de Vite (apps/panel y apps/overlay)
+public/
+
+# credenciales del agente local
+apps/agent/.env

@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+@import 'tailwindcss-primeui';
+@import 'primeicons/primeicons.css';
+
+/*
+ * Capas: PrimeReact inyecta sus estilos en la capa `primereact`. Declarar el
+ * orden aquí evita que las utilidades de Tailwind y los componentes se pisen
+ * de forma impredecible.
+ */
+@layer tailwind-base, primereact, tailwind-utilities;
+
+@theme {
+  --color-mw-ground: #0b0711;
+  --color-mw-surface: #150e1d;
+  --color-mw-surface-2: #1d1428;
+  --color-mw-line: #2e2040;
+  --color-mw-line-soft: #221731;
+  --color-mw-text: #f3eaf8;
+  --color-mw-muted: #a18fb4;
+  --color-mw-dim: #7a6a8c;
+  --color-mw-pink: #ff35b8;
+  --color-mw-violet: #a578ff;
+  --color-mw-ok: #35d6a4;
+  --color-mw-warn: #ffb338;
+  --color-mw-risk: #ff5b72;
+
+  --font-display: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 12% -10%, #2b1040 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #1a0b2e 0%, transparent 55%),
+    var(--color-mw-ground);
+  background-attachment: fixed;
+  color: var(--color-mw-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Resplandor del acento, usado con moderación: marca y estados activos. */
+.mw-glow {
+  text-shadow: 0 0 28px rgba(255, 53, 184, 0.55);
+}
+
+.mw-panel {
+  background: linear-gradient(150deg, #170f21, #100a18);
+  border: 1px solid var(--color-mw-line);
+  border-radius: 14px;
+}
+
+.mw-rail {
+  background: rgba(8, 6, 12, 0.72);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid var(--color-mw-line);
+}
+
+.mw-navitem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: #cfc2d8;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mw-navitem:hover {
+  background: rgba(255, 53, 184, 0.09);
+  color: #fff;
+}
+
+.mw-navitem[data-active='true'] {
+  background: rgba(255, 53, 184, 0.14);
+  border-left-color: var(--color-mw-pink);
+  color: #fff;
+}
+
+.mw-stat {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.mw-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-mw-dim);
+}
+
+/* Cinta de estado por plataforma: el color codifica, no decora. */
+.mw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.mw-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-mw-pink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

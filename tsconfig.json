@@ -1,0 +1,64 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2023"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [
+      "@cloudflare/workers-types"
+    ],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "baseUrl": ".",
+    "paths": {
+      "@monaworld/domain": [
+        "packages/domain/src/index.ts"
+      ],
+      "@monaworld/domain/*": [
+        "packages/domain/src/*"
+      ],
+      "@monaworld/contracts": [
+        "packages/contracts/src/index.ts"
+      ],
+      "@monaworld/contracts/*": [
+        "packages/contracts/src/*"
+      ],
+      "@monaworld/application": [
+        "packages/application/src/index.ts"
+      ],
+      "@monaworld/application/*": [
+        "packages/application/src/*"
+      ],
+      "@monaworld/connectors": [
+        "packages/connectors/src/index.ts"
+      ],
+      "@monaworld/connectors/*": [
+        "packages/connectors/src/*"
+      ],
+      "@monaworld/db": [
+        "packages/db/src/index.ts"
+      ],
+      "@monaworld/db/*": [
+        "packages/db/src/*"
+      ]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "apps/worker/src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "apps",
+    "dist",
+    "public"
+  ]
+}

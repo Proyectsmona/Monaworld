@@ -1,0 +1,23 @@
+{
+  "name": "@monaworld/agent",
+  "version": "7.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --experimental-strip-types --env-file-if-exists=.env src/main.ts",
+    "start": "node --experimental-strip-types --env-file-if-exists=.env src/main.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "youtube-auth": "node --experimental-strip-types --env-file-if-exists=.env src/youtube-auth.ts"
+  },
+  "dependencies": {
+    "@monaworld/connectors": "*",
+    "@monaworld/contracts": "*",
+    "@monaworld/domain": "*",
+    "obs-websocket-js": "^5.0.8",
+    "tiktok-live-connector": "^2.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  }
+}

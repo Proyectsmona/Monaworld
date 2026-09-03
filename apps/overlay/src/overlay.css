@@ -1,0 +1,175 @@
+/*
+ * Overlay para fuentes del navegador en OBS.
+ * Fondo transparente obligatorio: OBS compone esta página sobre el vídeo.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&display=swap');
+
+:root {
+  --pink: #ff35b8;
+  --violet: #a578ff;
+  --ink: #0b0711;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  color: #fff;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 16px;
+}
+
+.offline {
+  position: fixed;
+  left: 10px;
+  bottom: 8px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ------------------------------------------------------------------ alerta */
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 90%;
+  padding: 30px 44px;
+  text-align: center;
+  border-radius: 22px;
+  border: 2px solid var(--accent, var(--pink));
+  background: rgba(11, 7, 17, 0.86);
+  box-shadow:
+    0 0 60px color-mix(in srgb, var(--accent, var(--pink)) 45%, transparent),
+    inset 0 0 40px rgba(255, 53, 184, 0.08);
+}
+
+.alert-text {
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  font-size: clamp(24px, 4.2vw, 46px);
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
+  text-shadow: 0 0 26px color-mix(in srgb, var(--accent, var(--pink)) 70%, transparent);
+}
+
+.alert-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid var(--accent, var(--pink));
+}
+
+.alert-media {
+  max-width: 320px;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+/* Entrada y salida: una sola animación orquestada, sin efectos sueltos. */
+.is-entering {
+  animation: alert-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.is-leaving {
+  animation: alert-out 380ms ease-in both;
+}
+
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes alert-out {
+  to {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.97);
+  }
+}
+
+/* ------------------------------------------------------------------- metas */
+
+.stage-goals {
+  align-content: start;
+  gap: 12px;
+  place-items: stretch;
+}
+
+.goal {
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 53, 184, 0.4);
+  background: rgba(11, 7, 17, 0.8);
+}
+
+.goal-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.goal-track {
+  margin-top: 8px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.goal-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink), var(--violet));
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* -------------------------------------------------------------- temporizador */
+
+.stage-timer .timer {
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  font-size: clamp(40px, 12vw, 96px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 0 34px rgba(255, 53, 184, 0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-entering,
+  .is-leaving {
+    animation: none;
+  }
+  .goal-fill {
+    transition: none;
+  }
+}

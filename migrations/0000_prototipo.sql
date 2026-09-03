@@ -1,0 +1,31 @@
+-- Esquema original del prototipo. En la D1 remota ya existe, así que este
+-- fichero es un no-op allí; sirve para levantar la base en local desde cero.
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'USER',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  key TEXT NOT NULL,
+  value TEXT NOT NULL,
+  UNIQUE (user_id, key)
+);
+
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  platform TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  username TEXT,
+  amount REAL DEFAULT 0,
+  monacoins INTEGER DEFAULT 0,
+  monopoints INTEGER DEFAULT 0,
+  timer_seconds INTEGER DEFAULT 0,
+  simulated INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

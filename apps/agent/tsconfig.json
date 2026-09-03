@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": false,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@monaworld/domain": ["../../packages/domain/src/index.ts"],
+      "@monaworld/contracts": ["../../packages/contracts/src/index.ts"],
+      "@monaworld/connectors": ["../../packages/connectors/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}
