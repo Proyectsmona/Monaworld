@@ -85,7 +85,7 @@ export function Events({
             {PRESETS.map((p) => (
               <Button
                 key={p.label}
-                severity="secondary"
+                className="mw-btn"
                 size="small"
                 loading={busy === p.label}
                 onClick={() => fire(p)}

@@ -132,7 +132,7 @@ export function Rules() {
               </p>
             </div>
             {loaded && rules.length === 0 && (
-              <Button loading={busy} onClick={seed}>
+              <Button className="mw-submit" loading={busy} onClick={seed}>
                 Crear reglas de ejemplo
               </Button>
             )}
@@ -187,8 +187,7 @@ export function Rules() {
                       </ToggleSwitch.Control>
                     </ToggleSwitch.Root>
                     <Button
-                      severity="danger"
-                      variant="text"
+                      className="mw-btn mw-btn-danger mw-btn-icon"
                       size="small"
                       aria-label={`Eliminar ${rule.name}`}
                       onClick={() => setPendingDelete(rule)}

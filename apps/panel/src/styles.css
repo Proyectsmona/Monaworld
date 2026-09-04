@@ -253,123 +253,85 @@ body {
   filter: none;
 }
 
-/* Botones propios del proyecto, sin depender del tema de la librería. */
-.mw-btn {
+/*
+ * Sistema de botones del proyecto.
+ *
+ * Toda la familia usa la clase repetida para llegar a especificidad 0-2-0, por
+ * la misma razón que los campos: los estilos de la librería se inyectan en
+ * ejecución con selectores de una clase, y depender de ganar por orden o por
+ * capa ya falló dos veces. Con dos clases el resultado no depende de eso.
+ *
+ * Tres niveles y dos modificadores, nada más:
+ *   mw-submit   acción principal de la pantalla, una por vista
+ *   mw-btn      acción secundaria con cuerpo visible
+ *   mw-btn-ghost  acción terciaria, sin peso: enlaces y navegación
+ *   + mw-btn-danger  para lo que destruye
+ *   + mw-btn-icon    para los que solo llevan icono
+ */
+.mw-btn.mw-btn,
+.mw-btn-ghost.mw-btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
   min-height: 2.5rem;
   padding: 0.5rem 1.05rem;
-  border: 1px solid #6b5789;
   border-radius: 10px;
-  background: #241a33;
-  color: var(--color-mw-text);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.mw-btn:hover:not(:disabled) {
+.mw-btn.mw-btn {
+  border: 1px solid #6b5789;
+  background: #241a33;
+  color: var(--color-mw-text);
+}
+
+.mw-btn.mw-btn:hover:not(:disabled) {
   border-color: #8f76b5;
   background: #2b1f3d;
 }
 
-.mw-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+/* Terciario: sin relleno, pero con borde al acercarse para que se sepa que lo es. */
+.mw-btn-ghost.mw-btn-ghost {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-mw-muted);
 }
 
-.mw-btn-danger {
-  border-color: color-mix(in srgb, var(--color-mw-risk) 55%, transparent);
-  background: color-mix(in srgb, var(--color-mw-risk) 16%, transparent);
+.mw-btn-ghost.mw-btn-ghost:hover:not(:disabled) {
+  border-color: #4a3c63;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-mw-text);
+}
+
+.mw-btn.mw-btn:disabled,
+.mw-btn-ghost.mw-btn-ghost:disabled,
+.mw-submit.mw-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.mw-btn-danger.mw-btn-danger {
+  border: 1px solid color-mix(in srgb, var(--color-mw-risk) 60%, transparent);
+  background: color-mix(in srgb, var(--color-mw-risk) 14%, transparent);
   color: #ffd7dd;
 }
 
-.mw-btn-danger:hover:not(:disabled) {
+.mw-btn-danger.mw-btn-danger:hover:not(:disabled) {
   border-color: var(--color-mw-risk);
   background: color-mix(in srgb, var(--color-mw-risk) 26%, transparent);
 }
 
-/* ------------------------------------------------------ lienzo del estudio */
-
-/*
- * Proporción fija 16:9 con `aspect-ratio`: el lienzo se estira al ancho que
- * tenga disponible y la altura sale sola. Así el editor refleja exactamente lo
- * que verá OBS sin fijar 1920×1080 en píxeles, que no cabría en pantalla.
- */
-.mw-canvas {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  width: 100%;
-  border: 1px solid var(--color-mw-line);
-  border-radius: 12px;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 100% 10%,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 10% 100%,
-    #0a0710;
-  overflow: hidden;
-  touch-action: none;
-}
-
-.mw-canvas-widget {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--color-mw-violet) 60%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--color-mw-violet) 12%, transparent);
-  color: var(--color-mw-text);
-  cursor: grab;
-  user-select: none;
-}
-
-.mw-canvas-widget:active {
-  cursor: grabbing;
-}
-
-.mw-canvas-widget[data-selected='true'] {
-  border-color: var(--color-mw-pink);
-  background: color-mix(in srgb, var(--color-mw-pink) 16%, transparent);
-  box-shadow: 0 0 0 1px var(--color-mw-pink);
-}
-
-/* Un widget oculto sigue en el lienzo para poder recuperarlo, pero se ve que lo está. */
-.mw-canvas-widget[data-hidden='true'] {
-  opacity: 0.4;
-  border-style: dashed;
-}
-
-.mw-canvas-tag {
-  position: absolute;
-  top: 3px;
-  left: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-mw-muted);
-  pointer-events: none;
-}
-
-.mw-canvas-grip {
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 14px;
-  height: 14px;
-  border-right: 2px solid var(--color-mw-pink);
-  border-bottom: 2px solid var(--color-mw-pink);
-  border-bottom-right-radius: 8px;
-  cursor: nwse-resize;
-}
-
-.mw-btn[data-active='true'] {
-  border-color: var(--color-mw-pink);
-  background: color-mix(in srgb, var(--color-mw-pink) 18%, transparent);
+/* Cuadrado: un botón de solo icono con relleno horizontal se ve deformado. */
+.mw-btn-icon.mw-btn-icon {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0;
 }
 
 /* ------------------------------------------------- campos y botones propios */

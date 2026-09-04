@@ -86,7 +86,7 @@ export function Settings({
                 </Message.Root>
               )}
               <div className="flex items-center gap-3">
-                <Button type="submit" loading={busy} disabled={!dirty}>
+                <Button type="submit" className="mw-submit" loading={busy} disabled={!dirty}>
                   Guardar cambios
                 </Button>
                 {note && <span className="text-sm text-mw-muted">{note}</span>}

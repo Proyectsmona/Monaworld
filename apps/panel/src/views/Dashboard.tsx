@@ -54,7 +54,7 @@ export function Dashboard({
           <Card.Body className="p-5">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="font-display text-lg font-bold">Conectores</h2>
-              <Button variant="text" size="small" onClick={() => onGoTo('platforms')}>
+              <Button className="mw-btn-ghost" size="small" onClick={() => onGoTo('platforms')}>
                 Gestionar
               </Button>
             </div>
@@ -85,7 +85,7 @@ export function Dashboard({
           <Card.Body className="p-5">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="font-display text-lg font-bold">Últimos eventos</h2>
-              <Button variant="text" size="small" onClick={() => onGoTo('events')}>
+              <Button className="mw-btn-ghost" size="small" onClick={() => onGoTo('events')}>
                 Ver todo
               </Button>
             </div>

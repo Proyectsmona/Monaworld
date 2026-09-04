@@ -195,7 +195,7 @@ export function OverlayStudio() {
             <div className="flex items-center gap-3">
               {dirty && <span className="text-sm text-mw-dim">Cambios sin guardar.</span>}
               {note && !dirty && <span className="text-sm text-mw-muted">{note}</span>}
-              <Button loading={busy} disabled={!dirty} onClick={() => void save()}>
+              <Button className="mw-submit" loading={busy} disabled={!dirty} onClick={() => void save()}>
                 Guardar y publicar
               </Button>
             </div>

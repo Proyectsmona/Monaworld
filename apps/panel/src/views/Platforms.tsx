@@ -174,6 +174,7 @@ export function Platforms() {
                   {how.connectable ? (
                     <>
                       <Button
+                        className="mw-submit"
                         size="small"
                         loading={busy === account.platform}
                         onClick={() => {
@@ -184,9 +185,8 @@ export function Platforms() {
                       </Button>
                       {account.connected && (
                         <Button
+                          className="mw-btn mw-btn-danger"
                           size="small"
-                          severity="secondary"
-                          variant="text"
                           loading={busy === account.platform}
                           onClick={() => setPendingDisconnect(account.platform)}
                         >

@@ -133,10 +133,8 @@ export function App() {
             {realtime.connected ? 'En vivo' : 'Sin conexión'}
           </div>
           <Button
-            severity="secondary"
-            variant="text"
+            className="mw-btn-ghost mt-2 w-full"
             size="small"
-            className="mt-2 w-full"
             onClick={async () => {
               await api.logout();
               setUser(null);

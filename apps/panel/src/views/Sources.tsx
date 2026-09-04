@@ -84,7 +84,7 @@ export function Sources() {
                 <code className="min-w-0 flex-1 truncate rounded border border-mw-line bg-black/30 px-2 py-1.5 font-mono text-xs text-mw-muted">
                   {urlFor(w.id)}
                 </code>
-                <Button severity="secondary" size="small" onClick={() => copy(w.id)}>
+                <Button className="mw-btn" size="small" onClick={() => copy(w.id)}>
                   {copied === w.id ? 'Copiado' : 'Copiar'}
                 </Button>
               </li>
