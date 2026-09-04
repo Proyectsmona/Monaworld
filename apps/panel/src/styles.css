@@ -274,8 +274,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  min-height: 2.5rem;
-  padding: 0.5rem 1.05rem;
+  min-height: 2.75rem;
+  padding: 0.68rem 1.45rem;
   border-radius: 10px;
   font: inherit;
   font-size: 0.9rem;
@@ -329,8 +329,8 @@ body {
 
 /* Cuadrado: un botón de solo icono con relleno horizontal se ve deformado. */
 .mw-btn-icon.mw-btn-icon {
-  width: 2.5rem;
-  min-width: 2.5rem;
+  width: 2.75rem;
+  min-width: 2.75rem;
   padding: 0;
 }
 
@@ -348,7 +348,7 @@ body {
  */
 .mw-field.mw-field {
   width: 100%;
-  padding: 0.62rem 0.85rem;
+  padding: 0.72rem 0.95rem;
   border: 1px solid #6b5789;
   border-radius: 10px;
   background: #241a33;
@@ -376,7 +376,8 @@ body {
 }
 
 .mw-submit.mw-submit {
-  min-height: 2.7rem;
+  min-height: 2.9rem;
+  padding: 0.72rem 1.7rem;
   border: 1px solid #ff6bc9;
   border-radius: 10px;
   background: linear-gradient(90deg, #ff35b8, #a578ff);
