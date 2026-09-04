@@ -1,10 +1,28 @@
-const PLATFORM_COLOR: Record<string, string> = {
-  twitch: '#a970ff',
-  youtube: '#ff4e45',
-  kick: '#53fc18',
-  tiktok: '#25f4ee',
-  manual: '#a18fb4',
+/**
+ * Identidad visual por plataforma: el color codifica de dónde entra el evento,
+ * no decora.
+ *
+ * TikTok es la excepción y merece explicación. Su marca es negra, pero el panel
+ * ya es casi negro: un trazo negro sobre fondo negro no distingue nada, que es
+ * exactamente lo contrario de para lo que está el color aquí. Se resuelve como
+ * lo hace la propia TikTok sobre fondos oscuros —relleno negro sólido y trazo
+ * claro— así conserva su identidad y sigue leyéndose de un vistazo.
+ */
+export interface PlatformStyle {
+  readonly accent: string;
+  readonly fill?: string;
+}
+
+export const PLATFORM_STYLE: Record<string, PlatformStyle> = {
+  twitch: { accent: '#a970ff' },
+  youtube: { accent: '#ff3b30' },
+  kick: { accent: '#53fc18' },
+  tiktok: { accent: '#f0f0f0', fill: '#000000' },
+  manual: { accent: '#a18fb4' },
 };
+
+export const platformStyle = (platform: string): PlatformStyle =>
+  PLATFORM_STYLE[platform] ?? PLATFORM_STYLE.manual!;
 
 const PLATFORM_LABEL: Record<string, string> = {
   twitch: 'Twitch',
@@ -14,11 +32,14 @@ const PLATFORM_LABEL: Record<string, string> = {
   manual: 'Manual',
 };
 
+export const platformLabel = (platform: string): string => PLATFORM_LABEL[platform] ?? platform;
+
 export function PlatformChip({ platform }: { platform: string }) {
+  const { accent, fill } = platformStyle(platform);
   return (
-    <span className="mw-chip" style={{ color: PLATFORM_COLOR[platform] ?? '#a18fb4' }}>
+    <span className="mw-chip" style={{ color: accent, background: fill }}>
       <span className="mw-dot" />
-      {PLATFORM_LABEL[platform] ?? platform}
+      {platformLabel(platform)}
     </span>
   );
 }

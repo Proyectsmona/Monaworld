@@ -22,9 +22,10 @@ const MAX_MESSAGES = 40;
 
 const PLATFORM_COLOR: Record<string, string> = {
   twitch: '#a970ff',
-  youtube: '#ff4e45',
+  youtube: '#ff3b30',
   kick: '#53fc18',
-  tiktok: '#25f4ee',
+  // Negro sobre vídeo no se ve: TikTok usa su trazo claro, no su relleno.
+  tiktok: '#f0f0f0',
   manual: '#ff35b8',
 };
 

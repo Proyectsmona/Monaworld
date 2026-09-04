@@ -130,6 +130,129 @@ body {
   background: currentColor;
 }
 
+/* --------------------------------------------------- campos de formulario */
+
+/*
+ * Los campos heredaban el mismo borde que los separadores del panel, así que
+ * en la práctica no existían: había que pasar el ratón por encima para
+ * descubrir dónde estaba la caja. Un campo tiene que anunciarse antes de que
+ * lo toques, no después.
+ *
+ * Se resuelve con tres señales acumulativas —relleno propio, borde con
+ * contraste real y anillo de foco— en vez de fiarlo todo al borde. Así el
+ * campo se distingue del fondo aunque el borde pase desapercibido.
+ */
+.p-inputtext,
+.p-inputnumber-input,
+.p-password-input,
+.p-textarea,
+.p-select,
+.p-multiselect {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #4a3c63;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-mw-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.p-inputtext::placeholder,
+.p-textarea::placeholder {
+  color: var(--color-mw-dim);
+}
+
+.p-inputtext:hover,
+.p-inputnumber-input:hover,
+.p-password-input:hover,
+.p-textarea:hover,
+.p-select:hover,
+.p-multiselect:hover {
+  border-color: #6b5a85;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.p-inputtext:focus,
+.p-inputnumber-input:focus,
+.p-password-input:focus,
+.p-textarea:focus,
+.p-select:focus,
+.p-select.p-focus,
+.p-multiselect.p-focus {
+  outline: none;
+  border-color: var(--color-mw-pink);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px rgba(255, 53, 184, 0.2);
+}
+
+.p-inputtext:disabled,
+.p-textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------ botones */
+
+/*
+ * El botón primario se definía solo por su degradado, sin borde ni sombra: en
+ * un panel oscuro con acento rosa se confundía con el resto de la superficie y
+ * no se leía dónde acababa. Se le da cuerpo explícito —altura mínima, sombra
+ * de apoyo y realce al pulsar— para que se lea como algo pulsable.
+ */
+.p-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.6rem;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+}
+
+.p-button:not(.p-button-text):not(.p-button-link):not(.p-button-outlined) {
+  background: linear-gradient(90deg, #ff35b8, #a578ff);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 6px 18px -8px rgba(255, 53, 184, 0.75);
+}
+
+.p-button:not(.p-button-text):not(.p-button-link):hover {
+  filter: brightness(1.08);
+}
+
+/* Un desplazamiento mínimo al pulsar: confirma el clic sin animar la interfaz. */
+.p-button:not(.p-button-text):not(.p-button-link):active {
+  transform: translateY(1px);
+}
+
+.p-button-outlined,
+.p-button-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #4a3c63;
+  color: var(--color-mw-text);
+}
+
+.p-button-outlined:hover,
+.p-button-secondary:hover {
+  border-color: #6b5a85;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.p-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-mw-pink);
   outline-offset: 2px;

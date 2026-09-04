@@ -9,6 +9,8 @@ import { Rules } from './views/Rules';
 import { Platforms } from './views/Platforms';
 import { Sources } from './views/Sources';
 import { Soon } from './views/Soon';
+import { Chat } from './views/Chat';
+import { Economy } from './views/Economy';
 
 export type ViewId =
   | 'dashboard'
@@ -169,20 +171,8 @@ export function App() {
               detail="Biblioteca de sonidos vinculables a reglas y cola de media requests."
             />
           )}
-          {view === 'chat' && (
-            <Soon
-              title="Multi Chat"
-              phase="Fase 6"
-              detail="Chat unificado de las cuatro plataformas. Solo lectura: MonaWorld nunca publica ni modera."
-            />
-          )}
-          {view === 'economy' && (
-            <Soon
-              title="Economía"
-              phase="Fase 6"
-              detail="MonaCoins, MonaPoints y MonaTimer con metas. Los contadores ya viven en la sala; falta la interfaz."
-            />
-          )}
+          {view === 'chat' && <Chat realtime={realtime} />}
+          {view === 'economy' && <Economy realtime={realtime} />}
           {view === 'store' && (
             <Soon
               title="Store"
