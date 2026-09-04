@@ -41,6 +41,28 @@ export const accountSummarySchema = z.object({
 });
 export type AccountSummary = z.infer<typeof accountSummarySchema>;
 
+/**
+ * Ajustes del panel.
+ *
+ * Se guardan como pares clave/valor en D1, pero salen y entran como un objeto
+ * cerrado: así el compilador conoce las claves que existen y añadir una obliga
+ * a tocar este esquema, en vez de que aparezcan cadenas sueltas repartidas por
+ * las vistas.
+ *
+ * Todos los campos tienen valor por defecto a propósito. Una instalación nueva
+ * no tiene ninguna fila en `settings`, y el panel debe funcionar igual desde el
+ * primer arranque sin tener que sembrar nada.
+ */
+export const settingsSchema = z.object({
+  coinsLabel: z.string().min(1).max(24).default('MonaCoins'),
+  pointsLabel: z.string().min(1).max(24).default('MonaPoints'),
+  /** Zona IANA. Solo afecta a cómo se muestran las fechas, nunca a cómo se guardan. */
+  timezone: z.string().min(1).max(64).default('Europe/Madrid'),
+});
+export type Settings = z.infer<typeof settingsSchema>;
+
+export const DEFAULT_SETTINGS: Settings = settingsSchema.parse({});
+
 export const counterSummarySchema = z.object({
   key: z.string(),
   value: z.number(),

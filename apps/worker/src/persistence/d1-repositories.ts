@@ -7,6 +7,7 @@ import {
   events,
   overlays,
   rules as rulesTable,
+  settings,
   viewers,
 } from '@monaworld/db';
 import type {
@@ -19,8 +20,8 @@ import type {
   SaveEventOutcome,
   ViewerRepository,
 } from '@monaworld/application';
-import { ruleSchema } from '@monaworld/contracts';
-import type { AccountSummary, ConnectorStatus, EventRow } from '@monaworld/contracts';
+import { DEFAULT_SETTINGS, ruleSchema, settingsSchema } from '@monaworld/contracts';
+import type { AccountSummary, ConnectorStatus, EventRow, Settings } from '@monaworld/contracts';
 import {
   CONNECTABLE_PLATFORMS,
   emptyLayout,
@@ -390,6 +391,57 @@ export async function persistCounters(
         .onConflictDoUpdate({ target: counters.key, set: { value } }),
     ) as unknown as [ReturnType<typeof db.insert>],
   );
+}
+
+
+/**
+ * Ajustes del panel sobre la tabla clave/valor.
+ *
+ * No lleva puerto en `application` a propósito: tiene una sola implementación
+ * y ningún caso de uso lo necesita: las rutas lo usan directamente, como hacen
+ * con las cuentas. Un puerto aquí sería ceremonia sin sustitución detrás.
+ */
+export class D1SettingsRepository {
+  private readonly db;
+
+  constructor(database: D1Database) {
+    this.db = drizzle(database);
+  }
+
+  /**
+   * Devuelve siempre un objeto completo.
+   *
+   * Las filas ausentes se rellenan con el valor por defecto en vez de dejar
+   * huecos: quien lee ajustes no debería tener que saber si el usuario llegó a
+   * guardarlos alguna vez.
+   */
+  async read(userId: number): Promise<Settings> {
+    const rows = await this.db
+      .select({ key: settings.key, value: settings.value })
+      .from(settings)
+      .where(eq(settings.userId, userId));
+
+    const stored = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    // Un valor guardado que ya no valide —una zona horaria que se retiró, por
+    // ejemplo— no debe romper el panel: se descarta y vuelve el de por defecto.
+    const parsed = settingsSchema.safeParse(stored);
+    return parsed.success ? parsed.data : DEFAULT_SETTINGS;
+  }
+
+  async write(userId: number, value: Settings): Promise<void> {
+    const entries = Object.entries(value);
+    await this.db.batch(
+      entries.map(([key, v]) =>
+        this.db
+          .insert(settings)
+          .values({ userId, key, value: String(v) })
+          .onConflictDoUpdate({
+            target: [settings.userId, settings.key],
+            set: { value: String(v) },
+          }),
+      ) as unknown as [ReturnType<typeof this.db.insert>],
+    );
+  }
 }
 
 export { and };

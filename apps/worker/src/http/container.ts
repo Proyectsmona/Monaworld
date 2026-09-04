@@ -6,6 +6,7 @@ import {
   D1EventRepository,
   D1OverlayRepository,
   D1RuleRepository,
+  D1SettingsRepository,
   D1ViewerRepository,
 } from '../persistence/d1-repositories.js';
 import { DurableRealtimeRoom } from '../realtime/durable-room.js';
@@ -27,6 +28,7 @@ export interface Container {
   readonly viewers: D1ViewerRepository;
   readonly accounts: D1AccountRepository;
   readonly overlays: D1OverlayRepository;
+  readonly settings: D1SettingsRepository;
   readonly room: DurableRealtimeRoom;
   readonly ingest: IngestDependencies;
   readonly ruleDeps: RuleDependencies;
@@ -38,6 +40,7 @@ export function buildContainer(env: WorkerEnv): Container {
   const viewers = new D1ViewerRepository(env.DB);
   const accounts = new D1AccountRepository(env.DB);
   const overlays = new D1OverlayRepository(env.DB);
+  const settings = new D1SettingsRepository(env.DB);
   const room = new DurableRealtimeRoom(env);
 
   return {
@@ -46,6 +49,7 @@ export function buildContainer(env: WorkerEnv): Container {
     viewers,
     accounts,
     overlays,
+    settings,
     room,
     ingest: {
       events,

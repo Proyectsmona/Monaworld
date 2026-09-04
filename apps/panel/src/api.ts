@@ -4,11 +4,12 @@ import type {
   CounterSummary,
   EventRow,
   SessionUser,
+  Settings,
 } from '@monaworld/contracts';
 
 // Los DTO se importan de `contracts` en vez de redeclararse: duplicarlos aquí
 // es justo cómo el cliente y el servidor se desincronizan sin que nadie lo note.
-export type { AccountSummary, CounterSummary, EventRow, SessionUser };
+export type { AccountSummary, CounterSummary, EventRow, SessionUser, Settings };
 /** Alias histórico, para no tocar todas las vistas de golpe. */
 export type AccountStatus = AccountSummary;
 export type CounterRow = CounterSummary;
@@ -48,6 +49,13 @@ export const api = {
   events: (limit = 50) => call<{ events: EventRow[] }>(`/api/events?limit=${limit}`),
   counters: () => call<{ counters: CounterRow[] }>('/api/counters'),
   accounts: () => call<{ accounts: AccountStatus[] }>('/api/accounts'),
+
+  settings: () => call<{ settings: Settings }>('/api/settings'),
+  saveSettings: (settings: Settings) =>
+    call<{ ok: true; settings: Settings }>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    }),
 
   rules: () => call<{ rules: Rule[] }>('/api/rules'),
   createRule: (rule: Omit<Rule, 'id'>) =>

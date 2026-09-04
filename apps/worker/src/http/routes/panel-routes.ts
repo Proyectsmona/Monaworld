@@ -8,6 +8,7 @@ import {
 import {
   layoutDraftSchema,
   ruleDraftSchema,
+  settingsSchema,
   simulateRequestSchema,
 } from '@monaworld/contracts';
 import { clampBox, emptyLayout } from '@monaworld/domain';
@@ -35,6 +36,7 @@ const OWNED_PATHS = [
   '/overlays',
   '/overlays/*',
   '/simulate',
+  '/settings',
 ] as const;
 
 export const panelRoutes = new Hono<Env>();
@@ -74,6 +76,27 @@ panelRoutes
   .get('/accounts', async (c) =>
     c.json({ accounts: await c.get('container').accounts.listSummaries() }),
   )
+
+  // ---------------------------------------------------------------- ajustes
+
+  .get('/settings', async (c) =>
+    c.json({ settings: await c.get('container').settings.read(c.get('user').id) }),
+  )
+
+  /**
+   * Guarda los ajustes completos, no un parche.
+   *
+   * El panel siempre envía el objeto entero porque el esquema rellena lo que
+   * falte con su valor por defecto: un PATCH parcial obligaría a leer, mezclar
+   * y escribir, y con un solo usuario no compensa esa complejidad.
+   */
+  .put('/settings', async (c) => {
+    const parsed = settingsSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: 'Ajustes inválidos' }, 400);
+
+    await c.get('container').settings.write(c.get('user').id, parsed.data);
+    return c.json({ ok: true, settings: parsed.data });
+  })
 
   // ----------------------------------------------------------------- reglas
 

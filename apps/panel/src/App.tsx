@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from 'primereact/button';
-import { api, type SessionUser } from './api';
+import { DEFAULT_SETTINGS } from '@monaworld/contracts';
+import { api, type SessionUser, type Settings as SettingsValue } from './api';
 import { useRealtime } from './useRealtime';
 import { Auth } from './views/Auth';
 import { Dashboard } from './views/Dashboard';
@@ -11,6 +12,7 @@ import { Sources } from './views/Sources';
 import { Soon } from './views/Soon';
 import { Chat } from './views/Chat';
 import { Economy } from './views/Economy';
+import { Settings } from './views/Settings';
 
 export type ViewId =
   | 'dashboard'
@@ -54,11 +56,17 @@ export function App() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<ViewId>('dashboard');
+  // Los ajustes se cargan una vez y viven aquí porque los usan varias vistas.
+  // Arrancan con los valores por defecto para que nada tenga que contemplar el
+  // caso «todavía no han cargado».
+  const [settings, setSettings] = useState<SettingsValue>(DEFAULT_SETTINGS);
 
   const refresh = useCallback(async () => {
     try {
       const { user } = await api.me();
       setUser(user);
+      // Si falla, los valores por defecto ya están puestos y el panel funciona.
+      api.settings().then((r) => setSettings(r.settings)).catch(() => {});
     } catch {
       setUser(null);
     } finally {
@@ -146,7 +154,7 @@ export function App() {
 
         <div className="p-6">
           {view === 'dashboard' && <Dashboard realtime={realtime} onGoTo={setView} />}
-          {view === 'events' && <Events realtime={realtime} />}
+          {view === 'events' && <Events realtime={realtime} settings={settings} />}
           {view === 'alerts' && <Rules />}
           {view === 'platforms' && <Platforms />}
           {view === 'obs' && <Sources />}
@@ -172,7 +180,7 @@ export function App() {
             />
           )}
           {view === 'chat' && <Chat realtime={realtime} />}
-          {view === 'economy' && <Economy realtime={realtime} />}
+          {view === 'economy' && <Economy realtime={realtime} settings={settings} />}
           {view === 'store' && (
             <Soon
               title="Store"
@@ -180,13 +188,7 @@ export function App() {
               detail="Fuera del alcance de la v1: es una herramienta personal, no un SaaS con planes ni pagos."
             />
           )}
-          {view === 'settings' && (
-            <Soon
-              title="Configuración"
-              phase="Fase 6"
-              detail="Nombres de moneda, zona horaria y token del agente local."
-            />
-          )}
+          {view === 'settings' && <Settings settings={settings} onSaved={setSettings} />}
         </div>
       </main>
     </div>

@@ -3,6 +3,7 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { InputText } from 'primereact/inputtext';
 import { api, type EventRow } from '../api';
+import type { Settings } from '../api';
 import type { RealtimeState } from '../useRealtime';
 import { Empty, PlatformChip } from './bits';
 
@@ -24,7 +25,13 @@ const PRESETS = [
   { label: 'Me gusta ×20', platform: 'tiktok', type: 'like', amount: 20 },
 ] as const;
 
-export function Events({ realtime }: { realtime: RealtimeState }) {
+export function Events({
+  realtime,
+  settings,
+}: {
+  realtime: RealtimeState;
+  settings: Settings;
+}) {
   const [history, setHistory] = useState<EventRow[]>([]);
   const [name, setName] = useState('usuario_demo');
   const [busy, setBusy] = useState<string | null>(null);
@@ -128,7 +135,9 @@ export function Events({ realtime }: { realtime: RealtimeState }) {
                         {e.amount ? e.amount.toLocaleString('es-ES') : '—'}
                       </td>
                       <td className="py-2.5 text-mw-dim">
-                        {new Date(e.createdAt + 'Z').toLocaleString('es-ES')}
+                        {new Date(e.createdAt + 'Z').toLocaleString('es-ES', {
+                          timeZone: settings.timezone,
+                        })}
                       </td>
                     </tr>
                   ))}

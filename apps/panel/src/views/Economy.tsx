@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from 'primereact/card';
-import { api, type CounterRow } from '../api';
+import { api, type CounterRow, type Settings } from '../api';
 import type { RealtimeState } from '../useRealtime';
 import { Empty } from './bits';
 
@@ -13,14 +13,27 @@ import { Empty } from './bits';
  * la sala cuando hay conexión porque es el que va por delante.
  */
 
-/** Contadores con nombre propio. El resto son los que cree el streamer. */
-const RESERVED: Record<string, { label: string; hint: string }> = {
-  monacoins: { label: 'MonaCoins', hint: 'Moneda que otorgan las reglas' },
-  monopoints: { label: 'MonaPoints', hint: 'Puntos de participación' },
+/**
+ * Contadores con nombre propio. El resto son los que cree el streamer.
+ *
+ * Las etiquetas de moneda y puntos salen de los ajustes: la clave interna
+ * (`monacoins`) no cambia nunca porque las reglas la referencian, pero cómo se
+ * llama en pantalla lo decide quien usa el panel.
+ */
+const reservedCounters = (settings: Settings): Record<string, { label: string; hint: string }> => ({
+  monacoins: { label: settings.coinsLabel, hint: 'Moneda que otorgan las reglas' },
+  monopoints: { label: settings.pointsLabel, hint: 'Puntos de participación' },
   timer: { label: 'MonaTimer', hint: 'Segundos acumulados del subatón' },
-};
+});
 
-export function Economy({ realtime }: { realtime: RealtimeState }) {
+export function Economy({
+  realtime,
+  settings,
+}: {
+  realtime: RealtimeState;
+  settings: Settings;
+}) {
+  const RESERVED = reservedCounters(settings);
   const [stored, setStored] = useState<CounterRow[]>([]);
   const [loaded, setLoaded] = useState(false);
 
