@@ -55,7 +55,7 @@ export function Sources() {
           </p>
           <div className="mt-3 max-w-md">
             <InputText
-              className="w-full"
+              className="mw-field w-full"
               type="password"
               value={token}
               placeholder="token de overlay"

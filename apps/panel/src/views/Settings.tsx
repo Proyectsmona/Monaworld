@@ -48,6 +48,7 @@ export function Settings({
     <label className="flex flex-col gap-1.5">
       <span className="mw-label">{label}</span>
       <InputText
+        className="mw-field"
         value={draft[key]}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setDraft((d) => ({ ...d, [key]: e.target.value }))

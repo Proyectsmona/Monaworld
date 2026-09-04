@@ -78,7 +78,7 @@ export function Events({
 
           <label className="mt-4 flex max-w-xs flex-col gap-1.5">
             <span className="mw-label">Nombre del espectador</span>
-            <InputText value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
+            <InputText className="mw-field" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
           </label>
 
           <div className="mt-4 flex flex-wrap gap-2">

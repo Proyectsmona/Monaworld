@@ -372,6 +372,63 @@ body {
   background: color-mix(in srgb, var(--color-mw-pink) 18%, transparent);
 }
 
+/* ------------------------------------------------- campos y botones propios */
+
+/*
+ * La clase va repetida (`.mw-field.mw-field`) para subir la especificidad a
+ * 0-2-0. No es un truco gratuito: los estilos de la librería se inyectan en
+ * tiempo de ejecución y con la misma especificidad que un selector de clase
+ * suelto, así que quién gana dependía del orden de inserción y del acierto al
+ * configurar las capas. Con dos clases el resultado deja de depender de eso.
+ *
+ * Es la tercera vez que se toca este punto. Las dos anteriores se apoyaban en
+ * ganar la cascada por orden o por capa; esta no necesita ganarla.
+ */
+.mw-field.mw-field {
+  width: 100%;
+  padding: 0.62rem 0.85rem;
+  border: 1px solid #6b5789;
+  border-radius: 10px;
+  background: #241a33;
+  color: var(--color-mw-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mw-field.mw-field::placeholder {
+  color: #9280a8;
+}
+
+.mw-field.mw-field:hover {
+  border-color: #8f76b5;
+  background: #2b1f3d;
+}
+
+.mw-field.mw-field:focus {
+  outline: none;
+  border-color: var(--color-mw-pink);
+  background: #2b1f3d;
+  box-shadow: 0 0 0 3px rgba(255, 53, 184, 0.25);
+}
+
+.mw-submit.mw-submit {
+  min-height: 2.7rem;
+  border: 1px solid #ff6bc9;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #ff35b8, #a578ff);
+  color: #fff;
+  font-weight: 700;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 8px 22px -10px rgba(255, 53, 184, 0.9);
+}
+
+.mw-submit.mw-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-mw-pink);
   outline-offset: 2px;

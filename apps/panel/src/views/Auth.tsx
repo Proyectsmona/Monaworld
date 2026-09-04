@@ -80,6 +80,7 @@ export function Auth({ onAuthenticated }: { onAuthenticated: () => void }) {
             <label className="flex flex-col gap-1.5">
               <span className="mw-label">Usuario</span>
               <InputText
+                className="mw-field"
                 value={username}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -90,6 +91,7 @@ export function Auth({ onAuthenticated }: { onAuthenticated: () => void }) {
             <label className="flex flex-col gap-1.5">
               <span className="mw-label">Contraseña</span>
               <InputText
+                className="mw-field"
                 type="password"
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
@@ -109,7 +111,7 @@ export function Auth({ onAuthenticated }: { onAuthenticated: () => void }) {
               </Message.Root>
             )}
 
-            <Button type="submit" loading={busy} className="w-full">
+            <Button type="submit" loading={busy} className="mw-submit w-full">
               {needsBootstrap ? 'Crear cuenta y entrar' : 'Entrar'}
             </Button>
           </form>

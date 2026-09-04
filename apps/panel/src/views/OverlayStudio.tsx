@@ -186,9 +186,9 @@ export function OverlayStudio() {
             <label className="flex flex-col gap-1.5">
               <span className="mw-label">Nombre del layout</span>
               <InputText
+                className="mw-field max-w-xs"
                 value={name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                className="max-w-xs"
               />
             </label>
 
@@ -287,6 +287,7 @@ export function OverlayStudio() {
                   <label className="flex flex-col gap-1.5">
                     <span className="mw-label">Contador</span>
                     <InputText
+                      className="mw-field"
                       value={selected.binding ?? ''}
                       placeholder="monacoins"
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -300,6 +301,7 @@ export function OverlayStudio() {
                   <label className="flex flex-col gap-1.5">
                     <span className="mw-label">Texto</span>
                     <InputText
+                      className="mw-field"
                       value={selected.text ?? ''}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         patch(selected.id, { text: e.target.value })
@@ -312,6 +314,7 @@ export function OverlayStudio() {
                   <label className="flex flex-col gap-1.5">
                     <span className="mw-label">URL de la imagen</span>
                     <InputText
+                      className="mw-field"
                       value={selected.imageUrl ?? ''}
                       placeholder="https://…"
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -324,6 +327,7 @@ export function OverlayStudio() {
                 <label className="flex flex-col gap-1.5">
                   <span className="mw-label">Color de acento</span>
                   <InputText
+                    className="mw-field"
                     value={selected.style?.accentColor ?? ''}
                     placeholder="#ff35b8"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -337,6 +341,7 @@ export function OverlayStudio() {
                 <label className="flex flex-col gap-1.5">
                   <span className="mw-label">Tamaño de letra (px)</span>
                   <InputText
+                    className="mw-field"
                     value={selected.style?.fontSizePx ? String(selected.style.fontSizePx) : ''}
                     placeholder="32"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
