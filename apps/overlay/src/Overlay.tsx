@@ -302,9 +302,10 @@ function Stage({
 }) {
   if (!connected) return <div className="offline">MonaWorld · sin conexión</div>;
 
-  // Distinguir «aún no ha llegado» de «llegó vacío» evita el susto de ver la
-  // fuente en negro y creer que está rota cuando solo falta guardar el layout.
-  if (widgets === null) return null;
+  // Una fuente en negro es indistinguible de una rota. Mientras no haya layout
+  // se dice por qué, con la misma marca discreta que el aviso de sin conexión:
+  // molesta menos que pasar media hora buscando un fallo que no existe.
+  if (widgets === null) return <div className="offline">MonaWorld · sin layout guardado</div>;
 
   return (
     <div className="canvas">
