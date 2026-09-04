@@ -253,6 +253,46 @@ body {
   filter: none;
 }
 
+/* Botones propios del proyecto, sin depender del tema de la librería. */
+.mw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 1.05rem;
+  border: 1px solid #4a3c63;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-mw-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mw-btn:hover:not(:disabled) {
+  border-color: #6b5a85;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.mw-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mw-btn-danger {
+  border-color: color-mix(in srgb, var(--color-mw-risk) 55%, transparent);
+  background: color-mix(in srgb, var(--color-mw-risk) 16%, transparent);
+  color: #ffd7dd;
+}
+
+.mw-btn-danger:hover:not(:disabled) {
+  border-color: var(--color-mw-risk);
+  background: color-mix(in srgb, var(--color-mw-risk) 26%, transparent);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-mw-pink);
   outline-offset: 2px;

@@ -4,7 +4,7 @@ import { Card } from 'primereact/card';
 import { ToggleSwitch } from 'primereact/toggleswitch';
 import type { Rule } from '@monaworld/domain';
 import { api } from '../api';
-import { Empty } from './bits';
+import { ConfirmDialog, Empty } from './bits';
 
 /**
  * Reglas: condición → acciones. Las visibles (alerta, sonido) pasan por la cola
@@ -109,8 +109,13 @@ export function Rules() {
     await api.updateRule(id, { ...rest, enabled });
   };
 
+  // Se guarda la regla entera, no solo el id: el diálogo necesita su nombre
+  // para que quien confirma sepa exactamente qué va a borrar.
+  const [pendingDelete, setPendingDelete] = useState<Rule | null>(null);
+
   const remove = async (rule: Rule) => {
     setRules((rs) => rs.filter((r) => r.id !== rule.id));
+    setPendingDelete(null);
     await api.deleteRule(rule.id);
   };
 
@@ -186,7 +191,7 @@ export function Rules() {
                       variant="text"
                       size="small"
                       aria-label={`Eliminar ${rule.name}`}
-                      onClick={() => remove(rule)}
+                      onClick={() => setPendingDelete(rule)}
                     >
                       <span className="pi pi-trash" />
                     </Button>
@@ -197,6 +202,14 @@ export function Rules() {
           )}
         </Card.Body>
       </Card.Root>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="¿Eliminar esta regla?"
+        detail={`«${pendingDelete?.name ?? ''}» dejará de aplicarse. Los eventos seguirán entrando, pero no producirán sus acciones. No se puede deshacer.`}
+        onConfirm={() => pendingDelete && void remove(pendingDelete)}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

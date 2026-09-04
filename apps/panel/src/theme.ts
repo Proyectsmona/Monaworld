@@ -102,5 +102,20 @@ export const MonaWorldPreset = definePreset(Aura, {
   },
 });
 
-/** Fuerza el modo oscuro: la identidad del producto es neón sobre negro. */
-export const themeOptions = { darkModeSelector: '.mw-dark' } as const;
+/**
+ * Opciones del tema.
+ *
+ * `cssLayer` no es opcional aquí aunque lo parezca. Sin él, PrimeReact inyecta
+ * su CSS sin capa y en tiempo de ejecución, es decir DESPUÉS de `styles.css`:
+ * con la misma especificidad gana el último y cualquier ajuste propio sobre
+ * `.p-inputtext` o `.p-button` queda pisado sin dejar rastro. Declararlo mete
+ * esos estilos en la capa `primereact`, que el orden de `styles.css` sitúa por
+ * debajo, y devuelve el control a las reglas del proyecto.
+ */
+export const themeOptions = {
+  darkModeSelector: '.mw-dark',
+  cssLayer: {
+    name: 'primereact',
+    order: 'tailwind-base, primereact, tailwind-utilities',
+  },
+} as const;

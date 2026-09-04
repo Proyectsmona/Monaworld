@@ -3,7 +3,7 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { Message } from 'primereact/message';
 import { api, type AccountStatus } from '../api';
-import { PlatformChip, StatusChip } from './bits';
+import { ConfirmDialog, PlatformChip, StatusChip } from './bits';
 
 /**
  * Conexión de cuentas.
@@ -88,7 +88,10 @@ export function Platforms() {
     if (result) history.replaceState(null, '', location.pathname);
   }, [result]);
 
+  const [pendingDisconnect, setPendingDisconnect] = useState<Platform | null>(null);
+
   const disconnect = async (platform: Platform) => {
+    setPendingDisconnect(null);
     setBusy(platform);
     setError(null);
     try {
@@ -185,7 +188,7 @@ export function Platforms() {
                           severity="secondary"
                           variant="text"
                           loading={busy === account.platform}
-                          onClick={() => disconnect(account.platform)}
+                          onClick={() => setPendingDisconnect(account.platform)}
                         >
                           Desconectar
                         </Button>
@@ -213,6 +216,16 @@ export function Platforms() {
           </p>
         </Card.Body>
       </Card.Root>
+
+      <ConfirmDialog
+        open={pendingDisconnect !== null}
+        title="¿Desconectar la cuenta?"
+        detail="Se borrarán las suscripciones de webhook en la plataforma y el token guardado. Dejarás de recibir eventos hasta que vuelvas a conectar y autorizar."
+        confirmLabel="Desconectar"
+        busy={busy === pendingDisconnect}
+        onConfirm={() => pendingDisconnect && void disconnect(pendingDisconnect)}
+        onCancel={() => setPendingDisconnect(null)}
+      />
     </div>
   );
 }
