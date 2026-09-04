@@ -86,12 +86,26 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
     const role = url.searchParams.get('role') === 'panel' ? 'panel' : 'overlay';
     const { 0: client, 1: server } = new WebSocketPair();
 
-    // Un overlay de chat quiere el evento en crudo; el de alertas no. La
-    // etiqueta se toma de la URL y no de un mensaje posterior porque las
-    // etiquetas son lo único que sobrevive a la hibernación: un registro en
-    // memoria se perdería en cuanto el objeto se descargue a mitad de directo.
+    /*
+     * Quién recibe el evento en crudo.
+     *
+     * Dos fuentes lo necesitan: la de chat a pantalla completa y la del lienzo
+     * compuesto, que puede llevar un widget de chat dentro. La de alertas no,
+     * y por eso el filtro existe: en un directo activo son cientos de mensajes
+     * por minuto hacia algo que no los pinta.
+     *
+     * El lienzo se suscribe siempre, aunque su layout no tenga chat todavía.
+     * Decidirlo por el contenido obligaría a re-etiquetar sockets ya abiertos
+     * cada vez que se guarda en el editor, y una fuente de OBS puede llevar
+     * horas conectada: acabaría en un chat mudo imposible de reproducir.
+     *
+     * La etiqueta se toma de la URL y no de un mensaje posterior porque es lo
+     * único que sobrevive a la hibernación: un registro en memoria se perdería
+     * en cuanto el objeto se descargue a mitad de directo.
+     */
+    const widget = url.searchParams.get('widget');
     const tags = [role];
-    if (role === 'overlay' && url.searchParams.get('widget') === 'chat') tags.push('chat');
+    if (role === 'overlay' && (widget === 'chat' || widget === 'layout')) tags.push('chat');
 
     // Hibernación: sin esto el objeto se queda cargado en memoria mientras haya
     // una fuente de OBS abierta, y se paga duración por cada hora de directo
