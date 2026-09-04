@@ -150,9 +150,9 @@ body {
 .p-multiselect {
   width: 100%;
   padding: 0.6rem 0.8rem;
-  border: 1px solid #4a3c63;
+  border: 1px solid #6b5789;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
+  background: #241a33;
   color: var(--color-mw-text);
   font-family: inherit;
   font-size: 0.95rem;
@@ -170,8 +170,8 @@ body {
 .p-textarea:hover,
 .p-select:hover,
 .p-multiselect:hover {
-  border-color: #6b5a85;
-  background: rgba(255, 255, 255, 0.06);
+  border-color: #8f76b5;
+  background: #2b1f3d;
 }
 
 .p-inputtext:focus,
@@ -183,8 +183,8 @@ body {
 .p-multiselect.p-focus {
   outline: none;
   border-color: var(--color-mw-pink);
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 0 3px rgba(255, 53, 184, 0.2);
+  background: #2b1f3d;
+  box-shadow: 0 0 0 3px rgba(255, 53, 184, 0.25);
 }
 
 .p-inputtext:disabled,
@@ -236,8 +236,8 @@ body {
 
 .p-button-outlined,
 .p-button-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: #4a3c63;
+  background: #241a33;
+  border-color: #6b5789;
   color: var(--color-mw-text);
 }
 
@@ -261,9 +261,9 @@ body {
   gap: 0.45rem;
   min-height: 2.5rem;
   padding: 0.5rem 1.05rem;
-  border: 1px solid #4a3c63;
+  border: 1px solid #6b5789;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #241a33;
   color: var(--color-mw-text);
   font: inherit;
   font-size: 0.9rem;
@@ -273,8 +273,8 @@ body {
 }
 
 .mw-btn:hover:not(:disabled) {
-  border-color: #6b5a85;
-  background: rgba(255, 255, 255, 0.09);
+  border-color: #8f76b5;
+  background: #2b1f3d;
 }
 
 .mw-btn:disabled {

@@ -61,15 +61,27 @@ export const MonaWorldPreset = definePreset(Aura, {
           popover: { background: '#150e1d', borderColor: '#2e2040', color: '#f3eaf8' },
           modal: { background: '#150e1d', borderColor: '#2e2040', color: '#f3eaf8' },
         },
+        /*
+         * Un campo tiene que verse ANTES de tocarlo.
+         *
+         * Aquí estaba el fallo original: `background` era '#0b0711', que es
+         * exactamente `--color-mw-ground`, el fondo de la página. El campo se
+         * pintaba del color de lo que tenía detrás y su único límite era un
+         * borde tan oscuro como las líneas del panel. Invisible por
+         * construcción, y ningún ajuste de borde lo arreglaba.
+         *
+         * Ahora el relleno queda por encima de la superficie del panel y el
+         * borde tiene contraste real, así que la caja se lee sola.
+         */
         formField: {
-          background: '#0b0711',
-          disabledBackground: '#1d1428',
-          filledBackground: '#1d1428',
-          borderColor: '#2e2040',
-          hoverBorderColor: '#574868',
+          background: '#241a33',
+          disabledBackground: '#1a1226',
+          filledBackground: '#2b1f3d',
+          borderColor: '#6b5789',
+          hoverBorderColor: '#8f76b5',
           focusBorderColor: '#ff35b8',
           color: '#f3eaf8',
-          placeholderColor: '#7a6a8c',
+          placeholderColor: '#9280a8',
         },
         text: {
           color: '#f3eaf8',
