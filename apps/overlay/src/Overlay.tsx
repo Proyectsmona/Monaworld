@@ -40,6 +40,15 @@ export function Overlay() {
   const params = new URLSearchParams(location.search);
   const widget = params.get('widget') ?? 'alert';
   const token = params.get('t') ?? '';
+  /**
+   * Modo encuadre: dibuja el contorno de cada widget aunque esté vacío.
+   *
+   * Existe porque un widget de alerta no pinta nada entre eventos —lo correcto
+   * en directo— y eso deja la fuente en blanco justo cuando estás colocándola
+   * en OBS, que es indistinguible de que esté rota. Con `&preview=1` ves dónde
+   * cae cada cosa; se quita al terminar de encuadrar.
+   */
+  const preview = params.get('preview') === '1';
 
   const [alert, setAlert] = useState<ActiveAlert | null>(null);
   const [leaving, setLeaving] = useState(false);
@@ -138,6 +147,7 @@ export function Overlay() {
     return (
       <Stage
         widgets={widgets}
+        preview={preview}
         connected={connected}
         alert={alert}
         leaving={leaving}
@@ -287,6 +297,7 @@ function ChatList({
  */
 function Stage({
   widgets,
+  preview,
   connected,
   alert,
   leaving,
@@ -294,6 +305,7 @@ function Stage({
   counters,
 }: {
   widgets: OverlayWidget[] | null;
+  preview: boolean;
   connected: boolean;
   alert: ActiveAlert | null;
   leaving: boolean;
@@ -306,6 +318,7 @@ function Stage({
   // se dice por qué, con la misma marca discreta que el aviso de sin conexión:
   // molesta menos que pasar media hora buscando un fallo que no existe.
   if (widgets === null) return <div className="offline">MonaWorld · sin layout guardado</div>;
+  if (widgets.length === 0) return <div className="offline">MonaWorld · layout sin widgets</div>;
 
   return (
     <div className="canvas">
@@ -314,7 +327,8 @@ function Stage({
         .map((w) => (
           <div
             key={w.id}
-            className="canvas-widget"
+            className={preview ? 'canvas-widget is-preview' : 'canvas-widget'}
+            data-kind={w.kind}
             style={{
               left: `${w.box.xPercent}%`,
               top: `${w.box.yPercent}%`,

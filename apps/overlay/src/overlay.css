@@ -267,6 +267,28 @@ body {
   max-height: 100%;
 }
 
+/*
+ * Modo encuadre. Solo se activa con `&preview=1`, nunca en directo: marca cada
+ * caja y su tipo para poder colocarlas en OBS sin tener que disparar eventos.
+ */
+.canvas-widget.is-preview {
+  outline: 2px dashed rgba(255, 53, 184, 0.85);
+  outline-offset: -2px;
+  background: rgba(255, 53, 184, 0.08);
+}
+
+.canvas-widget.is-preview::after {
+  content: attr(data-kind);
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .is-entering,
   .is-leaving {
