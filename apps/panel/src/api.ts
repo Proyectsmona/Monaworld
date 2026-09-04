@@ -1,4 +1,4 @@
-import type { Rule } from '@monaworld/domain';
+import type { OverlayLayout, OverlayWidget, Rule } from '@monaworld/domain';
 import type {
   AccountSummary,
   CounterSummary,
@@ -49,6 +49,13 @@ export const api = {
   events: (limit = 50) => call<{ events: EventRow[] }>(`/api/events?limit=${limit}`),
   counters: () => call<{ counters: CounterRow[] }>('/api/counters'),
   accounts: () => call<{ accounts: AccountStatus[] }>('/api/accounts'),
+
+  overlays: () => call<{ overlays: OverlayLayout[] }>('/api/overlays'),
+  saveOverlay: (id: string, layout: { name: string; widgets: OverlayWidget[] }) =>
+    call<{ ok: true; version: number }>('/api/overlays/' + id, {
+      method: 'PUT',
+      body: JSON.stringify(layout),
+    }),
 
   settings: () => call<{ settings: Settings }>('/api/settings'),
   saveSettings: (settings: Settings) =>

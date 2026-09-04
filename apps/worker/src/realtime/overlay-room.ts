@@ -56,11 +56,11 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
       }
       if (url.pathname.endsWith('/layout')) {
         const body = (await request.json()) as { layout: OverlayLayout };
-        this.broadcast({
-          t: 'layout',
-          widgets: body.layout.widgets as never,
-          version: body.layout.version,
-        });
+        // Se guarda además de difundirse: una fuente que se abra después tiene
+        // que recibir el layout vigente, no quedarse en blanco esperando a que
+        // alguien vuelva a pulsar Guardar en el panel.
+        await this.ctx.storage.put(KEYS.layout, body.layout);
+        this.broadcast(layoutMessage(body.layout));
         return Response.json({ ok: true });
       }
       if (url.pathname.endsWith('/reset')) {
@@ -98,6 +98,9 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
     // aunque no ocurra nada.
     this.ctx.acceptWebSocket(server, tags);
     server.send(JSON.stringify(await this.snapshot()));
+
+    const layout = await this.layout();
+    if (layout) server.send(JSON.stringify(layoutMessage(layout)));
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -210,9 +213,12 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
         await this.applyTransition(complete(await this.queue(), message.id, Date.now()));
         return;
 
-      case 'hello':
+      case 'hello': {
         ws.send(JSON.stringify(await this.snapshot()));
+        const layout = await this.layout();
+        if (layout) ws.send(JSON.stringify(layoutMessage(layout)));
         return;
+      }
     }
   }
 
@@ -254,6 +260,10 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
     return (await this.ctx.storage.get<CounterTotals>(KEYS.counters)) ?? {};
   }
 
+  private async layout(): Promise<OverlayLayout | null> {
+    return (await this.ctx.storage.get<OverlayLayout>(KEYS.layout)) ?? null;
+  }
+
   private async queue(): Promise<AlertQueueState> {
     return (await this.ctx.storage.get<AlertQueueState>(KEYS.queue)) ?? EMPTY_QUEUE;
   }
@@ -271,9 +281,19 @@ export class OverlayRoom extends DurableObject<WorkerEnv> {
 
 const KEYS = {
   counters: 'counters',
+  layout: 'layout',
   queue: 'queue',
   cooldowns: 'cooldowns',
 } as const;
+
+/** Un layout se difunde igual al guardarse que al conectarse una fuente. */
+function layoutMessage(layout: OverlayLayout): ServerMessage {
+  return {
+    t: 'layout',
+    widgets: layout.widgets as never,
+    version: layout.version,
+  };
+}
 
 function summariseAwards(deltas: ReadonlyMap<string, number>): AwardedTotals {
   return {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ServerMessage } from '@monaworld/contracts';
-import type { StreamEvent } from '@monaworld/domain';
+import type { OverlayWidget, StreamEvent } from '@monaworld/domain';
 
 interface ActiveAlert {
   id: string;
@@ -46,6 +46,7 @@ export function Overlay() {
   const [counters, setCounters] = useState<Record<string, number>>({});
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<StreamEvent[]>([]);
+  const [widgets, setWidgets] = useState<OverlayWidget[] | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -84,6 +85,8 @@ export function Overlay() {
           if (msg.event.type === 'chat' && msg.event.message) {
             setMessages((prev) => [...prev, msg.event].slice(-MAX_MESSAGES));
           }
+        } else if (msg.t === 'layout') {
+          setWidgets(msg.widgets as OverlayWidget[]);
         } else if (msg.t === 'clear') {
           setAlert(null);
           setMessages([]);
@@ -130,6 +133,19 @@ export function Overlay() {
       clearTimeout(doneAt);
     };
   }, [alert]);
+
+  if (widget === 'layout') {
+    return (
+      <Stage
+        widgets={widgets}
+        connected={connected}
+        alert={alert}
+        leaving={leaving}
+        messages={messages}
+        counters={counters}
+      />
+    );
+  }
 
   if (widget === 'chat') {
     return <Chat messages={messages} connected={connected} />;
@@ -215,25 +231,181 @@ function Chat({ messages, connected }: { messages: StreamEvent[]; connected: boo
   return (
     <div className="stage stage-chat">
       {!connected && <div className="offline">MonaWorld · sin conexión</div>}
-      <div className="chat-list">
-        {messages.map((event) => (
-          <div
-            key={event.id}
-            className="chat-line"
-            style={
-              { '--accent': PLATFORM_COLOR[event.platform] ?? '#ff35b8' } as React.CSSProperties
-            }
-          >
-            <span className="chat-who">
-              {event.actor.isMod && <span className="chat-badge" title="Moderador">MOD</span>}
-              {event.actor.displayName}
-            </span>
-            {/* Texto plano: el mensaje viene de una plataforma, nunca innerHTML. */}
-            <span className="chat-text">{event.message}</span>
-          </div>
-        ))}
-        <div ref={endRef} />
-      </div>
+      <ChatList messages={messages} endRef={endRef} />
     </div>
   );
+}
+
+/**
+ * La columna de mensajes, aparte del widget que la contiene.
+ *
+ * La usan dos sitios con contenedores distintos: la fuente de chat a pantalla
+ * completa y el widget de chat dentro de un layout compuesto. Duplicar el
+ * marcado haría que uno de los dos se quedara atrás en el primer retoque.
+ */
+function ChatList({
+  messages,
+  endRef,
+}: {
+  messages: StreamEvent[];
+  endRef?: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <div className="chat-list">
+      {messages.map((event) => (
+        <div
+          key={event.id}
+          className="chat-line"
+          style={
+            { '--accent': PLATFORM_COLOR[event.platform] ?? '#ff35b8' } as React.CSSProperties
+          }
+        >
+          <span className="chat-who">
+            {event.actor.isMod && <span className="chat-badge" title="Moderador">MOD</span>}
+            {event.actor.displayName}
+          </span>
+          {/* Texto plano: el mensaje viene de una plataforma, nunca innerHTML. */}
+          <span className="chat-text">{event.message}</span>
+        </div>
+      ))}
+      {endRef && <div ref={endRef} />}
+    </div>
+  );
+}
+
+/**
+ * Lienzo compuesto: pinta un layout completo en una sola fuente de OBS.
+ *
+ * Cada widget se posiciona en porcentaje sobre un lienzo 16:9, no en píxeles,
+ * para que el mismo layout sirva a 1080p y a 1440p sin tocarlo. La fuente se
+ * configura del tamaño de la escena y aquí todo escala solo.
+ *
+ * El layout llega por WebSocket y no por HTTP: la fuente de OBS se autentica
+ * con el token del overlay, que no da acceso a la API del panel. La sala se lo
+ * manda al conectar y cada vez que se guarda, así el editor se ve reflejado en
+ * directo sin recargar la fuente.
+ */
+function Stage({
+  widgets,
+  connected,
+  alert,
+  leaving,
+  messages,
+  counters,
+}: {
+  widgets: OverlayWidget[] | null;
+  connected: boolean;
+  alert: ActiveAlert | null;
+  leaving: boolean;
+  messages: StreamEvent[];
+  counters: Record<string, number>;
+}) {
+  if (!connected) return <div className="offline">MonaWorld · sin conexión</div>;
+
+  // Distinguir «aún no ha llegado» de «llegó vacío» evita el susto de ver la
+  // fuente en negro y creer que está rota cuando solo falta guardar el layout.
+  if (widgets === null) return null;
+
+  return (
+    <div className="canvas">
+      {widgets
+        .filter((w) => w.visible)
+        .map((w) => (
+          <div
+            key={w.id}
+            className="canvas-widget"
+            style={{
+              left: `${w.box.xPercent}%`,
+              top: `${w.box.yPercent}%`,
+              width: `${w.box.widthPercent}%`,
+              height: `${w.box.heightPercent}%`,
+              justifyContent: w.style?.align ?? 'center',
+              fontFamily: w.style?.fontFamily,
+              fontSize: w.style?.fontSizePx ? `${w.style.fontSizePx}px` : undefined,
+              ['--accent' as string]: w.style?.accentColor ?? '#ff35b8',
+            }}
+          >
+            <WidgetBody
+              widget={w}
+              alert={alert}
+              leaving={leaving}
+              messages={messages}
+              counters={counters}
+            />
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function WidgetBody({
+  widget,
+  alert,
+  leaving,
+  messages,
+  counters,
+}: {
+  widget: OverlayWidget;
+  alert: ActiveAlert | null;
+  leaving: boolean;
+  messages: StreamEvent[];
+  counters: Record<string, number>;
+}) {
+  switch (widget.kind) {
+    case 'alert':
+      // Los widgets de sonido no pintan nada: suenan y ya.
+      if (!alert || alert.widget === 'sound') return null;
+      return (
+        <div
+          className={`alert ${leaving ? 'is-leaving' : 'is-entering'}`}
+          style={{ '--accent': PLATFORM_COLOR[alert.platform] ?? '#ff35b8' } as React.CSSProperties}
+        >
+          {alert.imageUrl && <img className="alert-media" src={alert.imageUrl} alt="" />}
+          {alert.avatarUrl && <img className="alert-avatar" src={alert.avatarUrl} alt="" />}
+          <div className="alert-text">{alert.text}</div>
+        </div>
+      );
+
+    case 'chat':
+      return <ChatList messages={messages} />;
+
+    case 'goal': {
+      // Sin `binding` el widget no sabe qué contador sigue: se deja a cero en
+      // vez de elegir uno cualquiera, que sería adivinar por el streamer.
+      const value = widget.binding ? (counters[widget.binding] ?? 0) : 0;
+      return (
+        <div className="goal w-full">
+          <div className="goal-head">
+            <span>{widget.text || widget.binding || 'meta'}</span>
+            <b>{Math.round(value).toLocaleString('es-ES')}</b>
+          </div>
+          <div className="goal-track">
+            <div className="goal-fill" style={{ width: `${Math.min(100, (value % 1000) / 10)}%` }} />
+          </div>
+        </div>
+      );
+    }
+
+    case 'timer':
+      return <div className="timer">{formatClock(counters['timer'] ?? 0)}</div>;
+
+    case 'label':
+      return <div className="alert-text">{widget.text}</div>;
+
+    case 'image':
+      return widget.imageUrl ? (
+        <img className="canvas-image" src={widget.imageUrl} alt="" />
+      ) : null;
+
+    default:
+      return null;
+  }
+}
+
+function formatClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`;
 }

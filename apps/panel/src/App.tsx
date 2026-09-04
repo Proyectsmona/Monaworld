@@ -13,6 +13,7 @@ import { Soon } from './views/Soon';
 import { Chat } from './views/Chat';
 import { Economy } from './views/Economy';
 import { Settings } from './views/Settings';
+import { OverlayStudio } from './views/OverlayStudio';
 
 export type ViewId =
   | 'dashboard'
@@ -158,13 +159,7 @@ export function App() {
           {view === 'alerts' && <Rules />}
           {view === 'platforms' && <Platforms />}
           {view === 'obs' && <Sources />}
-          {view === 'overlay' && (
-            <Soon
-              title="Overlay Studio"
-              phase="Fase 6"
-              detail="Editor visual de widgets sobre el lienzo 1920×1080. El renderer y el protocolo ya funcionan: falta la interfaz de edición."
-            />
-          )}
+          {view === 'overlay' && <OverlayStudio />}
           {view === 'commands' && (
             <Soon
               title="Comandos"

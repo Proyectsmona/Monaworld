@@ -293,6 +293,85 @@ body {
   background: color-mix(in srgb, var(--color-mw-risk) 26%, transparent);
 }
 
+/* ------------------------------------------------------ lienzo del estudio */
+
+/*
+ * Proporción fija 16:9 con `aspect-ratio`: el lienzo se estira al ancho que
+ * tenga disponible y la altura sale sola. Así el editor refleja exactamente lo
+ * que verá OBS sin fijar 1920×1080 en píxeles, que no cabría en pantalla.
+ */
+.mw-canvas {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  border: 1px solid var(--color-mw-line);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 100% 10%,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 10% 100%,
+    #0a0710;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.mw-canvas-widget {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--color-mw-violet) 60%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-mw-violet) 12%, transparent);
+  color: var(--color-mw-text);
+  cursor: grab;
+  user-select: none;
+}
+
+.mw-canvas-widget:active {
+  cursor: grabbing;
+}
+
+.mw-canvas-widget[data-selected='true'] {
+  border-color: var(--color-mw-pink);
+  background: color-mix(in srgb, var(--color-mw-pink) 16%, transparent);
+  box-shadow: 0 0 0 1px var(--color-mw-pink);
+}
+
+/* Un widget oculto sigue en el lienzo para poder recuperarlo, pero se ve que lo está. */
+.mw-canvas-widget[data-hidden='true'] {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.mw-canvas-tag {
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-mw-muted);
+  pointer-events: none;
+}
+
+.mw-canvas-grip {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 14px;
+  height: 14px;
+  border-right: 2px solid var(--color-mw-pink);
+  border-bottom: 2px solid var(--color-mw-pink);
+  border-bottom-right-radius: 8px;
+  cursor: nwse-resize;
+}
+
+.mw-btn[data-active='true'] {
+  border-color: var(--color-mw-pink);
+  background: color-mix(in srgb, var(--color-mw-pink) 18%, transparent);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-mw-pink);
   outline-offset: 2px;

@@ -12,6 +12,12 @@ import { InputText } from 'primereact/inputtext';
  * clip de «mi setup».
  */
 const WIDGETS = [
+  {
+    id: 'layout',
+    name: 'Lienzo completo',
+    size: '1920 × 1080',
+    note: 'Todo lo que compongas en Overlay Studio, en una sola fuente.',
+  },
   { id: 'alert', name: 'Alertas', size: '800 × 400', note: 'Follows, subs, gifts y raids.' },
   { id: 'chat', name: 'Multi Chat', size: '420 × 720', note: 'Las cuatro plataformas juntas.' },
   { id: 'goal', name: 'Metas', size: '600 × 140', note: 'Barras de progreso de contadores.' },
