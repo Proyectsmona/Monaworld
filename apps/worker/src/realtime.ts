@@ -1,3 +1,4 @@
+import { DurableObject } from 'cloudflare:workers';
 import type { WorkerEnv } from './env.js';
 
 export class OverlayRoom extends DurableObject<WorkerEnv> {
