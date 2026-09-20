@@ -1,10 +1,5 @@
-export * from './shared/normalizer.js';
-export * from './shared/oauth.js';
-export * from './twitch/twitch-normalizer.js';
-export * from './twitch/twitch-signature.js';
-export * from './twitch/twitch-oauth.js';
-export * from './kick/kick-normalizer.js';
-export * from './kick/kick-signature.js';
-export * from './kick/kick-oauth.js';
-export * from './youtube/youtube-normalizer.js';
-export * from './tiktok/tiktok-normalizer.js';
+import type { Platform, UnifiedEvent } from '@monaworld/domain';
+export function makeUnifiedEvent(ownerUserId:number, platform:Platform, input:Omit<UnifiedEvent,'ownerUserId'|'platform'>):UnifiedEvent {
+  return { ...input, ownerUserId, platform };
+}
+export const PLATFORM_LABELS:Record<Platform,string> = { twitch:'Twitch', youtube:'YouTube', kick:'Kick', tiktok:'TikTok' };

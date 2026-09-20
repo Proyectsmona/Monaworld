@@ -1,5 +1,3 @@
--- Esquema original del prototipo. En la D1 remota ya existe, así que este
--- fichero es un no-op allí; sirve para levantar la base en local desde cero.
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
@@ -7,7 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL DEFAULT 'USER',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -15,7 +12,6 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL,
   UNIQUE (user_id, key)
 );
-
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,

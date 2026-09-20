@@ -1,118 +1,33 @@
-import { Uplink } from './transport/uplink.ts';
-import { TikTokConnector } from './connectors/tiktok-connector.ts';
-import { YouTubeConnector } from './connectors/youtube-connector.ts';
-import { ObsController } from './connectors/obs-controller.ts';
+import { TikTokLiveConnection } from 'tiktok-live-connector';
 
-/**
- * Agente local de MonaWorld.
- *
- * Hace exactamente lo que un Worker de Cloudflare no puede hacer, y nada más:
- *
- *   · YouTube — necesita una conexión abierta durante horas.
- *   · TikTok  — funciona mucho peor desde una IP de centro de datos.
- *   · OBS     — hay que estar en la misma máquina.
- *
- * Twitch y Kick NO están aquí: llegan por webhook directos al Worker y siguen
- * funcionando aunque este proceso esté apagado.
- *
- * Cada conector es independiente: si TikTok se rompe —y se romperá—, YouTube y
- * OBS siguen funcionando.
- */
+type Platform='youtube'|'tiktok';
+const origin=(process.env.MONAWORLD_ORIGIN||'http://127.0.0.1:8787').replace(/\/$/,'');
+const agentToken=process.env.AGENT_TOKEN||'';
+const ownerUserId=Number(process.env.OWNER_USER_ID||0);
+if(!agentToken||!ownerUserId){console.error('Faltan AGENT_TOKEN u OWNER_USER_ID en apps/agent/.env');process.exit(1)}
 
-const log = (message: string) => {
-  const time = new Date().toLocaleTimeString('es-ES');
-  console.log(`${time}  ${message}`);
-};
+type Active={platform:Platform;id:string;name:string;lastSeen:number};
+let remoteConnections:any[]=[];
+async function loadRemoteConnections(){try{const r=await fetch(`${origin}/api/agent/config?ownerUserId=${ownerUserId}`,{headers:{authorization:`Bearer ${agentToken}`}});if(r.ok)remoteConnections=((await r.json()) as any).connections||[]}catch(e){console.error('[agent config]',e)}}
+const active=new Map<string,Active>();
+function markActive(platform:Platform,id:string,name:string){active.set(`${platform}:${id}`,{platform,id,name,lastSeen:Date.now()})}
+async function send(platform:Platform,event:any){try{const r=await fetch(`${origin}/api/agent/event`,{method:'POST',headers:{authorization:`Bearer ${agentToken}`,'content-type':'application/json'},body:JSON.stringify({ownerUserId,event:{platform,...event}})});if(!r.ok)console.error(`[${platform}] uplink ${r.status}: ${await r.text()}`)}catch(e){console.error(`[${platform}] uplink`,e)}}
 
-function readEnv() {
-  const required = (name: string): string => {
-    const value = process.env[name]?.trim();
-    if (!value) {
-      console.error(`Falta la variable ${name}. Copia .env.example a .env y rellénalo.`);
-      process.exit(1);
-    }
-    return value;
-  };
+setInterval(()=>{const now=Date.now();for(const [key,v] of active){if(now-v.lastSeen>15*60_000){active.delete(key);continue}void send(v.platform,{type:'loyalty_tick',actorId:v.id,actorName:v.name,dedupeKey:`loyalty:${ownerUserId}:${key}:${Math.floor(now/300000)}`})}},5*60_000).unref();
 
-  return {
-    baseUrl: required('MONAWORLD_URL').replace(/\/$/, ''),
-    token: required('AGENT_TOKEN'),
-    tiktokUsername: process.env.TIKTOK_USERNAME?.trim().replace(/^@/, ''),
-    youtube: {
-      clientId: process.env.YOUTUBE_CLIENT_ID?.trim(),
-      clientSecret: process.env.YOUTUBE_CLIENT_SECRET?.trim(),
-      refreshToken: process.env.YOUTUBE_REFRESH_TOKEN?.trim(),
-    },
-    obs: {
-      url: process.env.OBS_URL?.trim() || 'ws://127.0.0.1:4455',
-      password: process.env.OBS_PASSWORD?.trim(),
-    },
-  };
+async function startTikTok(){const username=process.env.TIKTOK_USERNAME;if(!username){console.log('[tiktok] sin TIKTOK_USERNAME; conector desactivado');return}const conn=new TikTokLiveConnection(username);conn.on('chat',(d:any)=>{const id=String(d.userId||d.uniqueId||'unknown'),name=String(d.nickname||d.uniqueId||id);markActive('tiktok',id,name);void send('tiktok',{type:'chat_message',actorId:id,actorName:name,message:String(d.comment||''),dedupeKey:`tiktok:${d.msgId||crypto.randomUUID()}`})});conn.on('gift',(d:any)=>{if(d.giftType===1&&!d.repeatEnd)return;const id=String(d.userId||d.uniqueId||'unknown'),name=String(d.nickname||d.uniqueId||id);markActive('tiktok',id,name);const count=Number(d.repeatCount||1),coin=Number(d.diamondCount||0)*count;void send('tiktok',{type:'gift',actorId:id,actorName:name,amount:coin,currency:'TikTok Coins',rawUnit:'tiktok_coin',giftName:String(d.giftName||'Gift'),dedupeKey:`tiktok:${d.msgId||crypto.randomUUID()}`})});for(const type of ['follow','share'] as const)conn.on(type,(d:any)=>{const id=String(d.userId||d.uniqueId||'unknown'),name=String(d.nickname||d.uniqueId||id);markActive('tiktok',id,name);void send('tiktok',{type,actorId:id,actorName:name,dedupeKey:`tiktok:${type}:${d.msgId||crypto.randomUUID()}`})});conn.on('member',(d:any)=>{const id=String(d.userId||d.uniqueId||'unknown'),name=String(d.nickname||d.uniqueId||id);markActive('tiktok',id,name);void send('tiktok',{type:'member',actorId:id,actorName:name,dedupeKey:`tiktok:member:${d.msgId||crypto.randomUUID()}`})});conn.on('disconnected',()=>{console.log('[tiktok] desconectado; reintento en 15s');setTimeout(()=>void startTikTok(),15000)});try{await conn.connect();console.log(`[tiktok] conectado a @${username}`)}catch(e){console.error('[tiktok]',e);setTimeout(()=>void startTikTok(),30000)}}
+
+class YouTubeConnector{
+ access:string|null=null;expires=0;liveChatId:string|null=null;pageToken:string|undefined;primed=false;timer:NodeJS.Timeout|undefined;
+ async token(){if(this.access&&Date.now()<this.expires-60000)return this.access;const cid=process.env.YOUTUBE_CLIENT_ID||'',secret=process.env.YOUTUBE_CLIENT_SECRET||'',refresh=process.env.YOUTUBE_REFRESH_TOKEN||String(remoteConnections.find(x=>x.platform==='youtube')?.refresh_token||'');if(!cid||!secret||!refresh)throw new Error('faltan credenciales YouTube');const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:cid,client_secret:secret,refresh_token:refresh,grant_type:'refresh_token'})});if(!r.ok)throw new Error(`token ${r.status}`);const j=await r.json() as any;this.access=j.access_token;this.expires=Date.now()+Number(j.expires_in||3600)*1000;return this.access!}
+ async call(path:string,params:Record<string,string>){const u=new URL(`https://www.googleapis.com/youtube/v3/${path}`);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));const r=await fetch(u,{headers:{authorization:`Bearer ${await this.token()}`}});if(!r.ok)throw new Error(`${path} ${r.status}: ${await r.text()}`);return r.json() as Promise<any>}
+ async findChat(){const j=await this.call('liveBroadcasts',{part:'snippet',broadcastStatus:'active',broadcastType:'all',maxResults:'1'});return j.items?.[0]?.snippet?.liveChatId||null}
+ map(item:any){const s=item.snippet||{},a=item.authorDetails||{},id=String(a.channelId||'unknown'),name=String(a.displayName||id),type=String(s.type||'textMessageEvent');markActive('youtube',id,name);const base={actorId:id,actorName:name,dedupeKey:`youtube:${item.id||crypto.randomUUID()}`};if(type==='textMessageEvent')return {...base,type:'chat_message',message:String(s.textMessageDetails?.messageText||s.displayMessage||'')};if(type==='superChatEvent')return {...base,type:'super_chat',message:String(s.displayMessage||''),amount:Number(s.superChatDetails?.amountMicros||0)/1_000_000,currency:String(s.superChatDetails?.currency||'')};if(type==='superStickerEvent')return {...base,type:'super_sticker',amount:Number(s.superStickerDetails?.amountMicros||0)/1_000_000,currency:String(s.superStickerDetails?.currency||''),giftName:String(s.superStickerDetails?.superStickerMetadata?.altText||'Super Sticker')};if(type==='newSponsorEvent'||type==='memberMilestoneChatEvent')return {...base,type:'membership',message:String(s.displayMessage||'')};if(type==='membershipGiftingEvent')return {...base,type:'gift_membership',message:String(s.displayMessage||'')};return {...base,type:type.replace(/Event$/,'').replace(/[A-Z]/g,(m:string)=>`_${m.toLowerCase()}`),message:String(s.displayMessage||'')};}
+ async tick(){try{if(!this.liveChatId){this.liveChatId=await this.findChat();this.pageToken=undefined;this.primed=false;if(!this.liveChatId){console.log('[youtube] sin directo activo');return this.schedule(60000)}console.log('[youtube] chat activo')}const page=await this.call('liveChat/messages',{liveChatId:this.liveChatId,part:'snippet,authorDetails',maxResults:'200',...(this.pageToken?{pageToken:this.pageToken}:{})});this.pageToken=page.nextPageToken;if(this.primed){for(const i of page.items||[])void send('youtube',this.map(i))}else{this.primed=true;console.log(`[youtube] historial inicial omitido: ${(page.items||[]).length}`)}this.schedule(Math.max(2000,Number(page.pollingIntervalMillis||5000)))}catch(e){console.error('[youtube]',e);this.liveChatId=null;this.schedule(60000)}}
+ schedule(ms:number){clearTimeout(this.timer);this.timer=setTimeout(()=>void this.tick(),ms);this.timer.unref?.()}
 }
 
-async function main(): Promise<void> {
-  const config = readEnv();
-
-  log('MonaWorld · agente local');
-  log(`Worker: ${config.baseUrl}`);
-
-  const uplink = new Uplink({ baseUrl: config.baseUrl, token: config.token, onLog: log });
-
-  const obs = new ObsController({ ...config.obs, onLog: log });
-  await obs.connect();
-
-  const running: Array<{ stop: () => void | Promise<void> }> = [];
-
-  // ------------------------------------------------------------- TikTok
-  if (config.tiktokUsername) {
-    const tiktok = new TikTokConnector({
-      username: config.tiktokUsername,
-      onEvent: (event) => uplink.publish(event),
-      onStatus: (status, detail) => void uplink.report('tiktok', status, detail),
-      onLog: log,
-    });
-    running.push(tiktok);
-    void tiktok.start();
-  } else {
-    log('TikTok desactivado (falta TIKTOK_USERNAME)');
-  }
-
-  // ------------------------------------------------------------ YouTube
-  const { clientId, clientSecret, refreshToken } = config.youtube;
-  if (clientId && clientSecret && refreshToken) {
-    const youtube = new YouTubeConnector({
-      clientId,
-      clientSecret,
-      refreshToken,
-      onEvent: (event) => uplink.publish(event),
-      onStatus: (status, detail) => void uplink.report('youtube', status, detail),
-      onLog: log,
-    });
-    running.push(youtube);
-    void youtube.start();
-  } else {
-    log('YouTube desactivado (faltan credenciales OAuth)');
-  }
-
-  if (running.length === 0) {
-    log('Ningún conector activo. Revisa el fichero .env.');
-  }
-
-  const shutdown = async () => {
-    log('cerrando…');
-    uplink.stop();
-    await Promise.allSettled(running.map((r) => r.stop()));
-    await obs.disconnect();
-    process.exit(0);
-  };
-
-  process.on('SIGINT', () => void shutdown());
-  process.on('SIGTERM', () => void shutdown());
-
-  // Un fallo dentro de un conector no debe tumbar el agente entero.
-  process.on('unhandledRejection', (reason) => {
-    log(`promesa sin capturar: ${String(reason)}`);
-  });
-}
-
-void main();
+await loadRemoteConnections();
+void startTikTok();
+if(process.env.YOUTUBE_CLIENT_ID&&process.env.YOUTUBE_CLIENT_SECRET&&process.env.YOUTUBE_REFRESH_TOKEN){void new YouTubeConnector().tick()}else console.log('[youtube] credenciales incompletas; conector desactivado');
+console.log(`[MonaWorld agent] owner=${ownerUserId} -> ${origin}`);

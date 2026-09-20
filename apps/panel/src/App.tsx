@@ -1,189 +1,109 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Button } from 'primereact/button';
-import { DEFAULT_SETTINGS } from '@monaworld/contracts';
-import { api, type SessionUser, type Settings as SettingsValue } from './api';
-import { useRealtime } from './useRealtime';
-import { Auth } from './views/Auth';
-import { Dashboard } from './views/Dashboard';
-import { Events } from './views/Events';
-import { Rules } from './views/Rules';
-import { Platforms } from './views/Platforms';
-import { Sources } from './views/Sources';
-import { Soon } from './views/Soon';
-import { Chat } from './views/Chat';
-import { Economy } from './views/Economy';
-import { Settings } from './views/Settings';
-import { OverlayStudio } from './views/OverlayStudio';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { api, type Platform, type Resource, type User } from './api';
 
-export type ViewId =
-  | 'dashboard'
-  | 'overlay'
-  | 'alerts'
-  | 'events'
-  | 'commands'
-  | 'music'
-  | 'chat'
-  | 'economy'
-  | 'platforms'
-  | 'obs'
-  | 'store'
-  | 'settings';
+const PLATFORMS:Platform[]=['twitch','youtube','kick','tiktok'];
+const PLATFORM_LABEL:Record<Platform,string>={twitch:'Twitch',youtube:'YouTube',kick:'Kick',tiktok:'TikTok'};
+const PLATFORM_ICON:Record<Platform,string>={twitch:'pi-twitch',youtube:'pi-youtube',kick:'pi-bolt',tiktok:'pi-music'};
+const moneyEvents=['bits','sub','resub','gift_sub','membership','gift_membership','super_chat','super_sticker','gift','donation'];
 
-interface NavItem {
-  id: ViewId;
-  label: string;
-  icon: string;
-  group: 'Estudio' | 'Creador' | 'Sistema';
-}
-
-const NAV: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'pi-th-large', group: 'Estudio' },
-  { id: 'overlay', label: 'Overlay Studio', icon: 'pi-clone', group: 'Estudio' },
-  { id: 'alerts', label: 'Alertas y reglas', icon: 'pi-bolt', group: 'Estudio' },
-  { id: 'events', label: 'Eventos', icon: 'pi-history', group: 'Estudio' },
-  { id: 'commands', label: 'Comandos', icon: 'pi-hashtag', group: 'Estudio' },
-  { id: 'music', label: 'Música y sonidos', icon: 'pi-volume-up', group: 'Estudio' },
-  { id: 'chat', label: 'Multi Chat', icon: 'pi-comments', group: 'Creador' },
-  { id: 'economy', label: 'Economía', icon: 'pi-dollar', group: 'Creador' },
-  { id: 'platforms', label: 'Plataformas', icon: 'pi-sitemap', group: 'Creador' },
-  { id: 'obs', label: 'Fuentes OBS', icon: 'pi-desktop', group: 'Creador' },
-  { id: 'store', label: 'Store', icon: 'pi-shopping-bag', group: 'Sistema' },
-  { id: 'settings', label: 'Configuración', icon: 'pi-cog', group: 'Sistema' },
+type ViewId='dashboard'|'activity'|'revenue'|'connections'|'commands'|'timers'|'counters'|'spam'|'banned'|'bot-settings'|'overlays'|'overlay-full'|'media-request'|'stickers'|'sounds'|'alerts'|'multichat'|'leaderboard'|'loyalty-settings'|'coin-settings'|'coin-pays'|'account-settings';
+interface NavGroup{title:string;icon:string;items:Array<{id:ViewId;label:string;icon:string}>}
+const NAV:NavGroup[]=[
+ {title:'Data & Reports',icon:'pi-chart-bar',items:[{id:'activity',label:'Activity Feed',icon:'pi-list'},{id:'revenue',label:'Revenue History',icon:'pi-wallet'},{id:'connections',label:'Connections',icon:'pi-link'}]},
+ {title:'Chat Bot',icon:'pi-comments',items:[{id:'commands',label:'Chat Commands',icon:'pi-hashtag'},{id:'timers',label:'Timers',icon:'pi-clock'},{id:'counters',label:'Counters',icon:'pi-plus-circle'},{id:'spam',label:'Spam Filters',icon:'pi-shield'},{id:'banned',label:'Banned Words',icon:'pi-ban'},{id:'bot-settings',label:'Settings',icon:'pi-cog'}]},
+ {title:'Streaming Tools',icon:'pi-video',items:[{id:'overlays',label:'Overlays',icon:'pi-clone'},{id:'overlay-full',label:'Overlay Full',icon:'pi-window-maximize'},{id:'media-request',label:'Media Request',icon:'pi-play'},{id:'stickers',label:'Stickers',icon:'pi-star'},{id:'sounds',label:'Sounds',icon:'pi-volume-up'},{id:'alerts',label:'Alerts',icon:'pi-bell'},{id:'multichat',label:'Multi Chat',icon:'pi-comments'}]},
+ {title:'Loyalty',icon:'pi-crown',items:[{id:'leaderboard',label:'Leaderboard',icon:'pi-sort-amount-up'},{id:'loyalty-settings',label:'Loyalty Settings',icon:'pi-sliders-h'}]},
+ {title:'Coin',icon:'pi-dollar',items:[{id:'coin-settings',label:'Settings',icon:'pi-cog'},{id:'coin-pays',label:'Pays',icon:'pi-chart-pie'}]}
 ];
 
-const GROUPS = ['Estudio', 'Creador', 'Sistema'] as const;
+function cx(...v:Array<string|false|undefined|null>){return v.filter(Boolean).join(' ')}
+function Button({children,onClick,kind='default',disabled=false,type='button',title}:{children:any;onClick?:()=>void;kind?:'default'|'primary'|'ghost'|'danger';disabled?:boolean;type?:'button'|'submit';title?:string}){return <button title={title} type={type} disabled={disabled} onClick={onClick} className={cx('mw-btn',kind==='primary'&&'primary',kind==='ghost'&&'ghost',kind==='danger'&&'danger')}>{children}</button>}
+function Card({children,className=''}:{children:any;className?:string}){return <section className={`mw-card ${className}`}>{children}</section>}
+function Empty({children}:{children:any}){return <div className="mw-empty"><i className="pi pi-sparkles"/><div>{children}</div></div>}
+function Badge({children,tone='violet'}:{children:any;tone?:string}){return <span className={`mw-badge ${tone}`}>{children}</span>}
+function Modal({title,children,onClose}:{title:string;children:any;onClose:()=>void}){return <div className="mw-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className="mw-modal"><div className="mw-modal-head"><h2>{title}</h2><button className="icon-btn" onClick={onClose}><i className="pi pi-times"/></button></div>{children}</div></div>}
+function PlatformsInput({value,onChange}:{value:Platform[];onChange:(v:Platform[])=>void}){return <div className="platform-checks">{PLATFORMS.map(p=><label key={p}><input type="checkbox" checked={value.includes(p)} onChange={e=>onChange(e.target.checked?[...value,p]:value.filter(x=>x!==p))}/><i className={`pi ${PLATFORM_ICON[p]}`}/>{PLATFORM_LABEL[p]}</label>)}</div>}
+function Field({label,children,hint}:{label:string;children:any;hint?:string}){return <label className="field"><span>{label}</span>{children}{hint&&<small>{hint}</small>}</label>}
 
-export function App() {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [ready, setReady] = useState(false);
-  const [view, setView] = useState<ViewId>('dashboard');
-  // Los ajustes se cargan una vez y viven aquí porque los usan varias vistas.
-  // Arrancan con los valores por defecto para que nada tenga que contemplar el
-  // caso «todavía no han cargado».
-  const [settings, setSettings] = useState<SettingsValue>(DEFAULT_SETTINGS);
-
-  const refresh = useCallback(async () => {
-    try {
-      const { user } = await api.me();
-      setUser(user);
-      // Si falla, los valores por defecto ya están puestos y el panel funciona.
-      api.settings().then((r) => setSettings(r.settings)).catch(() => {});
-    } catch {
-      setUser(null);
-    } finally {
-      setReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const realtime = useRealtime(Boolean(user));
-
-  if (!ready) {
-    return (
-      <div className="grid h-full place-items-center text-mw-dim">
-        <span className="pi pi-spin pi-spinner text-2xl" aria-label="Cargando" />
-      </div>
-    );
-  }
-
-  if (!user) return <Auth onAuthenticated={refresh} />;
-
-  const current = NAV.find((n) => n.id === view)!;
-
-  return (
-    <div className="flex h-full">
-      <aside className="mw-rail hidden w-60 shrink-0 flex-col gap-5 overflow-y-auto p-4 md:flex">
-        <div className="px-2 pt-2">
-          <div className="font-display text-2xl font-bold tracking-tight">
-            Mona<span className="mw-glow text-mw-pink">World</span>
-          </div>
-          <div className="mw-label mt-1">Centro de control</div>
-        </div>
-
-        {GROUPS.map((group) => (
-          <nav key={group} className="flex flex-col gap-1">
-            <div className="mw-label px-2 pb-1">{group}</div>
-            {NAV.filter((n) => n.group === group).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="mw-navitem"
-                data-active={view === item.id}
-                aria-current={view === item.id ? 'page' : undefined}
-                onClick={() => setView(item.id)}
-              >
-                <span className={`pi ${item.icon} text-mw-pink/80`} aria-hidden="true" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        ))}
-
-        <div className="mt-auto rounded-xl border border-mw-line p-3">
-          <div className="truncate text-sm font-semibold">{user.username}</div>
-          <div className="mw-label">{user.role}</div>
-          <div
-            className="mw-chip mt-2"
-            style={{ color: realtime.connected ? 'var(--color-mw-ok)' : 'var(--color-mw-dim)' }}
-          >
-            <span className="mw-dot" />
-            {realtime.connected ? 'En vivo' : 'Sin conexión'}
-          </div>
-          <Button
-            className="mw-btn-ghost mt-2 w-full"
-            size="small"
-            onClick={async () => {
-              await api.logout();
-              setUser(null);
-            }}
-          >
-            Cerrar sesión
-          </Button>
-        </div>
-      </aside>
-
-      <main className="min-w-0 flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 border-b border-mw-line bg-mw-ground/80 px-6 py-4 backdrop-blur">
-          <div className="mw-label">MonaWorld / {current.group}</div>
-          <h1 className="font-display text-2xl font-bold">{current.label}</h1>
-        </header>
-
-        <div className="p-6">
-          {view === 'dashboard' && <Dashboard realtime={realtime} onGoTo={setView} />}
-          {view === 'events' && <Events realtime={realtime} settings={settings} />}
-          {view === 'alerts' && <Rules />}
-          {view === 'platforms' && <Platforms />}
-          {view === 'obs' && <Sources />}
-          {view === 'overlay' && <OverlayStudio />}
-          {view === 'commands' && (
-            <Soon
-              title="Comandos"
-              phase="Fase 6"
-              detail="Comandos de chat con respuestas y acciones. Se apoyará en el mismo motor de reglas que las alertas."
-            />
-          )}
-          {view === 'music' && (
-            <Soon
-              title="Música y sonidos"
-              phase="Fase 6"
-              detail="Biblioteca de sonidos vinculables a reglas y cola de media requests."
-            />
-          )}
-          {view === 'chat' && <Chat realtime={realtime} />}
-          {view === 'economy' && <Economy realtime={realtime} settings={settings} />}
-          {view === 'store' && (
-            <Soon
-              title="Store"
-              phase="Sin fecha"
-              detail="Fuera del alcance de la v1: es una herramienta personal, no un SaaS con planes ni pagos."
-            />
-          )}
-          {view === 'settings' && <Settings settings={settings} onSaved={setSettings} />}
-        </div>
-      </main>
-    </div>
-  );
+function Landing({onAuth}:{onAuth:()=>void}){
+ const [support,setSupport]=useState(false),[subscription,setSubscription]=useState(false),[mode,setMode]=useState<'login'|'register'>('login');
+ const [username,setUsername]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const submit=async(e:React.FormEvent)=>{e.preventDefault();setError('');setBusy(true);try{mode==='login'?await api.login(username,password):await api.register(username,password);onAuth()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}};
+ return <div className="landing">
+   <header className="landing-nav"><div className="brand"><img src="/mona-fire.gif"/><span>Mona<span>World</span></span></div><div className="landing-links"><div className="dropdown"><button>Apóyanos <i className="pi pi-angle-down"/></button><div className="dropdown-menu"><button onClick={()=>setSupport(true)}><i className="pi pi-paypal"/> PayPal</button></div></div><div className="dropdown"><button>Programas <i className="pi pi-angle-down"/></button><div className="dropdown-menu"><button>MonaClips <small>Próximamente</small></button><button>ProjectMonena <small>Próximamente</small></button><button>MonaStudio <small>Próximamente</small></button></div></div><button onClick={()=>setSubscription(true)}>Suscripción</button></div></header>
+   <main className="landing-main"><Card className="auth-card"><div className="eyebrow">TU MONAWORLD</div><h1>{mode==='login'?'Inicia sesión':'Crea tu espacio'}</h1><p>Una cuenta, cuatro plataformas y toda tu configuración guardada.</p><div className="social-grid">{PLATFORMS.map(p=><a key={p} className={`social ${p}`} href={`/api/oauth/${p}/start?intent=login`}><i className={`pi ${PLATFORM_ICON[p]}`}/><span>{PLATFORM_LABEL[p]}</span></a>)}</div><div className="divider"><span>o acceso local</span></div><form onSubmit={submit}><Field label="Usuario"><input value={username} onChange={e=>setUsername(e.target.value)} placeholder="Tu usuario"/></Field><Field label="Contraseña"><input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Mínimo 8 caracteres"/></Field>{error&&<div className="error-box">{error}</div>}<Button type="submit" kind="primary" disabled={busy}>{busy?'Procesando…':mode==='login'?'Entrar':'Crear cuenta'}</Button></form><button className="text-link" onClick={()=>{setMode(mode==='login'?'register':'login');setError('')}}>{mode==='login'?'¿No tienes cuenta? Regístrate':'¿Ya tienes cuenta? Inicia sesión'}</button></Card>
+   <div className="hero-emblem"><div className="neon-orbit"/><img src="/mona-fire.gif" alt="Emblema MonaWorld"/><h2>TODO TU STREAM.<br/><span>UN SOLO MUNDO.</span></h2><p>Twitch · YouTube · Kick · TikTok</p></div></main>
+   {support&&<Modal title="Apóyanos" onClose={()=>setSupport(false)}><div className="support-box"><i className="pi pi-paypal big-icon"/><h3>Gracias por apoyar MonaWorld</h3><p>Puedes donar mediante PayPal a:</p><code>lamonachinajuega@gmail.com</code><div className="modal-actions"><Button kind="primary" onClick={()=>navigator.clipboard.writeText('lamonachinajuega@gmail.com')}>Copiar correo</Button><a className="mw-btn" href="https://www.paypal.com/" target="_blank" rel="noreferrer">Abrir PayPal</a></div></div></Modal>}
+   {subscription&&<Modal title="Suscripción" onClose={()=>setSubscription(false)}><div className="support-box"><i className="pi pi-crown big-icon"/><h3>Suscripción MonaWorld</h3><p>La infraestructura ya reserva este espacio para planes futuros. Las funciones base del canal permanecen separadas de la donación a PayPal.</p><Button onClick={()=>setSubscription(false)}>Cerrar</Button></div></Modal>}
+ </div>
 }
+
+function Sidebar({view,setView,user,onLogout}:{view:ViewId;setView:(v:ViewId)=>void;user:User;onLogout:()=>void}){
+ const [open,setOpen]=useState<Record<string,boolean>>(()=>Object.fromEntries(NAV.map(x=>[x.title,true])));
+ return <aside className="sidebar"><div className="side-brand"><img src="/mona-fire.gif"/><div>Mona<span>World</span></div></div><button className={cx('nav-dashboard',view==='dashboard'&&'active')} onClick={()=>setView('dashboard')}><i className="pi pi-th-large"/> Dashboard</button><div className="nav-groups">{NAV.map(g=><div className="nav-group" key={g.title}><button className="nav-group-title" onClick={()=>setOpen(o=>({...o,[g.title]:!o[g.title]}))}><span><i className={`pi ${g.icon}`}/>{g.title}</span><i className={`pi pi-angle-${open[g.title]?'down':'right'}`}/></button>{open[g.title]&&<div className="nav-children">{g.items.map(i=><button key={i.id} className={view===i.id?'active':''} onClick={()=>setView(i.id)}><i className={`pi ${i.icon}`}/>{i.label}</button>)}</div>}</div>)}</div><div className="side-user"><div className="avatar">{user.username.slice(0,1).toUpperCase()}</div><div className="grow"><b>{user.username}</b><small>{user.role}</small></div><button className="icon-btn" onClick={()=>setView('account-settings')} title="Configuración"><i className="pi pi-cog"/></button><button className="icon-btn" onClick={onLogout} title="Cerrar sesión"><i className="pi pi-sign-out"/></button></div></aside>
+}
+
+function Topbar({view}:{view:ViewId}){
+ const label=useMemo(()=>{if(view==='dashboard')return'Dashboard';for(const g of NAV){const i=g.items.find(x=>x.id===view);if(i)return`${g.title} / ${i.label}`}return'Configuración'},[view]);
+ const [support,setSupport]=useState(false);
+ return <><header className="topbar"><div><small>MonaWorld</small><h1>{label}</h1></div><div className="top-actions"><div className="dropdown compact"><button>Programas <i className="pi pi-angle-down"/></button><div className="dropdown-menu"><button>MonaClips</button><button>ProjectMonena</button><button>MonaStudio</button></div></div><button onClick={()=>setSupport(true)}>Apóyanos</button><button><i className="pi pi-crown"/> Suscripción</button></div></header>{support&&<Modal title="Apóyanos" onClose={()=>setSupport(false)}><div className="support-box"><p>PayPal</p><code>lamonachinajuega@gmail.com</code><Button kind="primary" onClick={()=>navigator.clipboard.writeText('lamonachinajuega@gmail.com')}>Copiar correo</Button></div></Modal>}</>
+}
+
+function DashboardView(){
+ const [data,setData]=useState<any>(null); useEffect(()=>{api.dashboard().then(setData).catch(()=>setData({platforms:[],redemptions:[],subscriptions:[]}))},[]);
+ const map=Object.fromEntries((data?.platforms||[]).map((x:any)=>[x.platform,x])); const max=Math.max(1,...PLATFORMS.map(p=>Number(map[p]?.amount||0)));
+ return <div className="page-stack"><div className="hero-title"><div><div className="eyebrow">4 PLATAFORMAS · 1 PANEL</div><h2>Resumen conjunto</h2><p>Ingresos reportados, eventos, Coins, Points, subs y canjes en un solo lugar.</p></div><Badge tone="green"><span className="dot"/> Tiempo real</Badge></div><div className="stats-grid">{PLATFORMS.map(p=><Card key={p}><div className="stat-head"><span className={`platform-mark ${p}`}><i className={`pi ${PLATFORM_ICON[p]}`}/></span><b>{PLATFORM_LABEL[p]}</b></div><div className="stat-value">{Number(map[p]?.amount||0).toLocaleString()}</div><small>ingreso/valor reportado</small><div className="mini-row"><span>{Number(map[p]?.events||0)} eventos</span><span>{Number(map[p]?.coins||0)} Coins</span></div></Card>)}</div><div className="two-col"><Card><div className="card-head"><div><h3>Ingresos por plataforma</h3><p>Comparación de los eventos monetarios registrados.</p></div></div><div className="bar-chart">{PLATFORMS.map(p=><div className="bar-row" key={p}><span>{PLATFORM_LABEL[p]}</span><div className="bar-track"><div className={`bar ${p}`} style={{width:`${Math.max(2,Number(map[p]?.amount||0)/max*100)}%`}}/></div><b>{Number(map[p]?.amount||0).toLocaleString()}</b></div>)}</div></Card><Card><div className="card-head"><div><h3>Canjes</h3><p>Stickers, Sounds y otros comandos consumidos.</p></div></div><div className="kpi-list">{['sticker','sound','media-request'].map(k=><div key={k}><span>{k==='sticker'?'Stickers':k==='sound'?'Sounds':'Media Requests'}</span><b>{Number(data?.redemptions?.find((x:any)=>x.resource_kind===k)?.count||0)}</b></div>)}</div></Card></div></div>
+}
+
+function ActivityView(){const [rows,setRows]=useState<any[]>([]);useEffect(()=>{api.events(250).then(r=>setRows(r.events))},[]);return <Card><div className="card-head"><div><h3>Activity Feed</h3><p>Actividad conjunta de Twitch, YouTube, Kick y TikTok.</p></div></div>{rows.length===0?<Empty>Aún no hay actividad registrada.</Empty>:<div className="feed">{rows.map(r=><div className="feed-row" key={r.id}><span className={`platform-mark ${r.platform}`}><i className={`pi ${PLATFORM_ICON[r.platform as Platform]||'pi-circle'}`}/></span><div className="grow"><b>{r.username||'Usuario'}</b><span>{r.event_type.replaceAll('_',' ')} {r.message&&`· ${r.message}`}</span></div><div className="feed-value">{Number(r.amount||0)>0&&<b>{r.amount} {r.raw_unit||''}</b>}<small>{new Date(r.created_at).toLocaleString()}</small></div></div>)}</div>}</Card>}
+function RevenueView(){const [rows,setRows]=useState<any[]>([]);useEffect(()=>{api.events(500).then(r=>setRows(r.events.filter((x:any)=>Number(x.amount)>0||Number(x.monacoins)>0||moneyEvents.some(k=>String(x.event_type).includes(k)))))},[]);return <Card><div className="card-head"><div><h3>Revenue History</h3><p>Historial monetario similar a StreamElements, unificado para las cuatro plataformas.</p></div></div><div className="table-wrap"><table><thead><tr><th>Fecha</th><th>Plataforma</th><th>Usuario</th><th>Evento</th><th>Valor reportado</th><th>Coins generados</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{new Date(r.created_at).toLocaleString()}</td><td><Badge tone={r.platform}>{PLATFORM_LABEL[r.platform as Platform]||r.platform}</Badge></td><td>{r.username||'—'}</td><td>{r.event_type}</td><td>{Number(r.amount||0).toLocaleString()} {r.raw_unit||''}</td><td>{Number(r.monacoins||0).toLocaleString()}</td></tr>)}</tbody></table></div></Card>}
+function ConnectionsView(){const [rows,setRows]=useState<any[]>([]),[busy,setBusy]=useState('');const load=()=>api.connections().then(r=>setRows(r.connections));useEffect(()=>{void load()},[]);return <div className="page-stack"><div className="hero-title"><div><h2>Connections</h2><p>Autoriza las cuatro plataformas. Cada conexión pertenece únicamente a tu cuenta MonaWorld.</p></div></div><div className="connection-grid">{PLATFORMS.map(p=>{const row=rows.find(x=>x.platform===p);return <Card key={p}><div className="connection-logo"><span className={`platform-mark ${p} large`}><i className={`pi ${PLATFORM_ICON[p]}`}/></span><div><h3>{PLATFORM_LABEL[p]}</h3><Badge tone={row?.status==='online'?'green':'muted'}>{row?.status==='online'?'Conectado':'Sin conectar'}</Badge></div></div>{row?<><div className="connection-user"><small>Cuenta</small><b>{row.channel_name}</b><span>{row.platform_user_id||''}</span></div><Button kind="danger" disabled={busy===p} onClick={async()=>{setBusy(p);await api.disconnect(p);await load();setBusy('')}}>Desconectar</Button></>:<a className="mw-btn primary" href={`/api/oauth/${p}/start?intent=connect`}>Conectar con OAuth</a>}</Card>})}</div><Card><h3>Qué obtiene MonaWorld</h3><p className="muted">La autorización se usa para leer eventos y datos necesarios para Dashboard, Revenue, Chat, Subs/Regalos y automatizaciones. Los permisos dependen de lo que cada plataforma publique oficialmente.</p></Card></div>}
+
+type FieldDef={key:string;label:string;type?:'text'|'number'|'select'|'platforms'|'textarea'|'url'|'file';options?:Array<{value:string;label:string}>;placeholder?:string;hint?:string;default?:any;mediaKind?:string};
+function ResourceManager({kind,title,subtitle,fields,defaults={}}:{kind:string;title:string;subtitle:string;fields:FieldDef[];defaults?:Record<string,any>}){
+ const [items,setItems]=useState<Resource[]>([]),[editing,setEditing]=useState<Resource|null>(null),[name,setName]=useState(''),[data,setData]=useState<Record<string,any>>(defaults),[enabled,setEnabled]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[overlayToken,setOverlayToken]=useState<{token:string;userId:number}|null>(null);
+ const load=()=>api.resources(kind).then(r=>setItems(r.items)); useEffect(()=>{void load();if(['overlay','alert','sticker','sound','media-request'].includes(kind))api.overlayToken().then(setOverlayToken).catch(()=>{})},[kind]);
+ const reset=()=>{setEditing(null);setName('');setData({...defaults});setEnabled(true);setError('')};
+ const save=async(e:React.FormEvent)=>{e.preventDefault();if(!name.trim())return;setBusy(true);setError('');try{const payload={name:name.trim(),enabled,data};editing?await api.updateResource(kind,editing.id,payload):await api.createResource(kind,payload);await load();reset()}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}};
+ const edit=(r:Resource)=>{setEditing(r);setName(r.name);setEnabled(r.enabled);setData({...defaults,...r.data});window.scrollTo({top:0,behavior:'smooth'})};
+ const renderField=(f:FieldDef)=>{const value=data[f.key]??f.default??(f.type==='platforms'?[]:''); if(f.type==='platforms')return <PlatformsInput value={value as Platform[]} onChange={v=>setData(d=>({...d,[f.key]:v}))}/>; if(f.type==='select')return <select value={String(value)} onChange={e=>setData(d=>({...d,[f.key]:e.target.value}))}>{f.options?.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select>; if(f.type==='textarea')return <textarea rows={4} value={String(value)} onChange={e=>setData(d=>({...d,[f.key]:e.target.value}))} placeholder={f.placeholder}/>; if(f.type==='file')return <div className="upload-line"><input value={String(value)} onChange={e=>setData(d=>({...d,[f.key]:e.target.value}))} placeholder={f.placeholder||'URL del archivo'}/><label className="mw-btn ghost file-button"><i className="pi pi-upload"/> Subir<input type="file" hidden onChange={async e=>{const file=e.target.files?.[0];if(!file)return;setBusy(true);try{const up=await api.uploadMedia(file,f.mediaKind||kind);setData(d=>({...d,[f.key]:up.url}))}catch(e){setError(e instanceof Error?e.message:String(e))}finally{setBusy(false)}}}/></label></div>; return <input type={f.type==='number'?'number':f.type==='url'?'url':'text'} value={String(value)} onChange={e=>setData(d=>({...d,[f.key]:f.type==='number'?Number(e.target.value):e.target.value}))} placeholder={f.placeholder}/>};
+ return <div className="page-stack"><Card><div className="card-head"><div><h3>{editing?`Editar ${title}`:`Agregar ${title}`}</h3><p>{subtitle}</p></div>{editing&&<Button kind="ghost" onClick={reset}>Cancelar edición</Button>}</div><form className="resource-form" onSubmit={save}><Field label="Nombre"><input value={name} onChange={e=>setName(e.target.value)} placeholder={`Nombre de ${title.toLowerCase()}`}/></Field>{fields.map(f=><Field key={f.key} label={f.label} hint={f.hint}>{renderField(f)}</Field>)}<label className="switch-line"><input type="checkbox" checked={enabled} onChange={e=>setEnabled(e.target.checked)}/><span>Activo</span></label>{error&&<div className="error-box">{error}</div>}<Button kind="primary" type="submit" disabled={busy}>{busy?'Guardando…':editing?'Guardar cambios':'Agregar'}</Button></form></Card><Card><div className="card-head"><div><h3>Mis {title}</h3><p>{items.length} configurados.</p></div></div>{items.length===0?<Empty>No hay elementos todavía.</Empty>:<div className="resource-list">{items.map(r=><div className="resource-row" key={r.id}><div className="resource-icon"><i className={cx('pi',kind==='sticker'?'pi-star':kind==='sound'?'pi-volume-up':kind==='alert'?'pi-bell':'pi-sliders-h')}/></div><div className="grow"><b>{r.name}</b><div className="resource-meta">{r.data.command&&<code>{r.data.command}</code>}{r.data.cost!==undefined&&<span>{r.data.cost} {r.data.currency==='coins'?'Coins':'Points'}</span>}{Array.isArray(r.data.platforms)&&<span>{r.data.platforms.map((p:string)=>PLATFORM_LABEL[p as Platform]||p).join(' · ')}</span>}</div></div><Badge tone={r.enabled?'green':'muted'}>{r.enabled?'Activo':'Pausado'}</Badge>{overlayToken&&['overlay','alert','sticker','sound','media-request'].includes(kind)&&<Button kind="ghost" title="Copiar URL individual para OBS" onClick={()=>{const widget=kind==='alert'?'alerts':kind==='sticker'?'stickers':kind==='sound'?'sounds':kind==='media-request'?'media':'overlay';navigator.clipboard.writeText(`${location.origin}/overlay/?user=${overlayToken.userId}&token=${overlayToken.token}&widget=${widget}&resource=${r.id}`)}}><i className="pi pi-link"/></Button>}<Button kind="ghost" onClick={()=>edit(r)}><i className="pi pi-pencil"/></Button><Button kind="danger" onClick={async()=>{if(confirm(`¿Eliminar ${r.name}?`)){await api.deleteResource(kind,r.id);await load()}}}><i className="pi pi-trash"/></Button></div>)}</div>}</Card></div>
+}
+
+const commonPlatforms:FieldDef={key:'platforms',label:'Plataformas donde funciona',type:'platforms',default:PLATFORMS};
+const costFields:FieldDef[]=[{key:'command',label:'Comando',placeholder:'!fuego'},{key:'currency',label:'Se paga con',type:'select',default:'points',options:[{value:'points',label:'Loyalty Points'},{value:'coins',label:'Coins'}]},{key:'cost',label:'Coste',type:'number',default:0},{key:'cooldown',label:'Cooldown (segundos)',type:'number',default:0},{key:'dailyLimit',label:'Límite diario por usuario (0 = sin límite)',type:'number',default:0},commonPlatforms];
+
+function CommandsView(){return <ResourceManager kind="command" title="Comandos" subtitle="Comandos default o personalizados para las cuatro plataformas." defaults={{platforms:PLATFORMS,response:'',action:'reply'}} fields={[{key:'command',label:'Comando',placeholder:'!hola'},{key:'response',label:'Respuesta',type:'textarea',placeholder:'Hola {user}!'},{key:'action',label:'Acción',type:'select',options:[{value:'reply',label:'Responder'},{value:'counter',label:'Modificar contador'},{value:'custom',label:'Acción personalizada'}]},commonPlatforms]}/>}
+function TimersView(){return <ResourceManager kind="timer" title="Timers" subtitle="Mensajes automáticos configurables y elegibles por plataforma." defaults={{platforms:PLATFORMS,minutes:10,message:''}} fields={[{key:'message',label:'Mensaje',type:'textarea'},{key:'minutes',label:'Cada cuántos minutos',type:'number',default:10},commonPlatforms]}/>}
+function CountersView(){return <ResourceManager kind="counter" title="Counters" subtitle="Contadores tipo Twitch controlados por comandos o eventos." defaults={{platforms:PLATFORMS,value:0,increment:1}} fields={[{key:'command',label:'Comando',placeholder:'!wins'},{key:'value',label:'Valor inicial',type:'number'},{key:'increment',label:'Cuánto sube',type:'number',default:1},commonPlatforms]}/>}
+function SpamView(){return <ResourceManager kind="spam-filter" title="Spam Filters" subtitle="Filtros de moderación inspirados en StreamElements. La acción se ejecuta donde la API de cada plataforma lo permita." defaults={{platforms:PLATFORMS,threshold:5,action:'timeout'}} fields={[{key:'pattern',label:'Filtro',type:'select',options:[{value:'caps',label:'Exceso de mayúsculas'},{value:'links',label:'Enlaces'},{value:'symbols',label:'Símbolos repetidos'},{value:'duplicate',label:'Mensajes repetidos'},{value:'emotes',label:'Exceso de emotes'}]},{key:'threshold',label:'Umbral',type:'number',default:5},{key:'action',label:'Acción',type:'select',options:[{value:'warn',label:'Advertir'},{value:'delete',label:'Eliminar mensaje'},{value:'timeout',label:'Suspender/timeout'},{value:'ban',label:'Banear'}]},commonPlatforms]}/>}
+function BannedView(){return <ResourceManager kind="banned-word" title="Banned Words" subtitle="Palabras o expresiones prohibidas con acción por plataforma." defaults={{platforms:PLATFORMS,action:'timeout'}} fields={[{key:'word',label:'Palabra o expresión'},{key:'action',label:'Acción',type:'select',options:[{value:'delete',label:'Eliminar'},{value:'warn',label:'Advertir'},{value:'timeout',label:'Suspender'},{value:'ban',label:'Banear'}]},commonPlatforms]}/>}
+function BotSettingsView(){return <ResourceManager kind="bot-setting" title="Bot Settings" subtitle="Estado y permisos del bot por plataforma. Debes dar moderador al bot donde la plataforma lo exija." defaults={{platforms:PLATFORMS,modEnabled:false}} fields={[{key:'botName',label:'Nombre visible del bot',placeholder:'MonaBot'},{key:'modEnabled',label:'Estado mod',type:'select',options:[{value:'true',label:'Mod configurado'},{value:'false',label:'Sin mod'}]},commonPlatforms]}/>}
+function StickersView(){return <ResourceManager kind="sticker" title="Stickers" subtitle="Cada sticker tiene su propio comando y coste en Points o Coins." defaults={{platforms:PLATFORMS,currency:'points',cost:0,cooldown:0,position:'random',duration:5}} fields={[...costFields,{key:'assetUrl',label:'Sticker / GIF / imagen',type:'file',mediaKind:'sticker'},{key:'position',label:'Dónde se lanza',type:'select',options:[{value:'random',label:'Aleatorio'},{value:'top',label:'Zona superior'},{value:'center',label:'Centro'},{value:'bottom',label:'Zona inferior'},{value:'fixed',label:'Posición fija del overlay'}]},{key:'duration',label:'Duración (segundos)',type:'number',default:5}]}/>}
+function SoundsView(){return <ResourceManager kind="sound" title="Sounds" subtitle="Inspirado en SoundAlerts: sonido canjeable por comando con coste configurable." defaults={{platforms:PLATFORMS,currency:'points',cost:0,cooldown:0,volume:80}} fields={[...costFields,{key:'assetUrl',label:'Audio',type:'file',mediaKind:'sound'},{key:'volume',label:'Volumen %',type:'number',default:80}]}/>}
+function MediaRequestView(){return <ResourceManager kind="media-request" title="Media Request" subtitle="Cola de música de YouTube mediante comando, Points o Coins." defaults={{platforms:PLATFORMS,currency:'points',cost:0,command:'!song',maxMinutes:8,volume:70}} fields={[...costFields,{key:'maxMinutes',label:'Duración máxima por solicitud (min)',type:'number',default:8},{key:'volume',label:'Volumen %',type:'number',default:70}]}/>}
+function AlertsView(){return <ResourceManager kind="alert" title="Alerts" subtitle="Una configuración específica por tipo de donación, sub, gift, Bits, Super Chat o evento monetario de cada plataforma." defaults={{platform:'twitch',eventType:'sub',minAmount:0,maxAmount:0,volume:80,size:100,text:'{user} apoyó el canal!'}} fields={[{key:'platform',label:'Plataforma',type:'select',options:PLATFORMS.map(p=>({value:p,label:PLATFORM_LABEL[p]}))},{key:'eventType',label:'Tipo de evento',placeholder:'sub / bits / gift / super_chat / ...'},{key:'minAmount',label:'Cantidad mínima',type:'number',default:0},{key:'maxAmount',label:'Cantidad máxima (0 = sin límite)',type:'number',default:0},{key:'text',label:'Texto de alerta',type:'textarea'},{key:'mediaUrl',label:'Imagen / GIF / video',type:'file',mediaKind:'alert-visual'},{key:'soundUrl',label:'Sonido',type:'file',mediaKind:'alert-sound'},{key:'volume',label:'Volumen %',type:'number',default:80},{key:'size',label:'Tamaño %',type:'number',default:100}]}/>}
+function OverlaysView(){return <ResourceManager kind="overlay" title="Overlays" subtitle="Overlays individuales, cada uno con configuración propia. Overlay Full se administra aparte." defaults={{widget:'custom',platforms:PLATFORMS,x:10,y:10,w:30,h:20}} fields={[{key:'widget',label:'Tipo de widget',type:'select',options:[{value:'custom',label:'Personalizado'},{value:'chat',label:'Chat'},{value:'counter',label:'Contador'},{value:'goal',label:'Meta'},{value:'leaderboard',label:'Leaderboard'},{value:'text',label:'Texto'},{value:'image',label:'Imagen'}]},commonPlatforms,{key:'text',label:'Texto / contenido',type:'textarea'}]}/>}
+
+interface CanvasWidget{id:string;type:string;label:string;x:number;y:number;w:number;h:number;visible:boolean}
+function OverlayFullView(){
+ const [widgets,setWidgets]=useState<CanvasWidget[]>([]),[selected,setSelected]=useState(''),[saving,setSaving]=useState(false),[resourceId,setResourceId]=useState<string|null>(null);const [token,setToken]=useState<{token:string;userId:number}|null>(null);const canvas=useRef<HTMLDivElement>(null);
+ useEffect(()=>{api.resources('overlay').then(r=>{const full=r.items.find(x=>x.data.full===true);if(full){setResourceId(full.id);setWidgets(Array.isArray(full.data.widgets)?full.data.widgets:[])}});api.overlayToken().then(setToken)},[]);
+ const add=(type:string)=>setWidgets(w=>[...w,{id:crypto.randomUUID(),type,label:type==='chat'?'Multi Chat':type==='alerts'?'Alerts':type==='stickers'?'Stickers':type==='sounds'?'Sounds':type==='leaderboard'?'Leaderboard':'Contador',x:10+(w.length*4)%45,y:10+(w.length*5)%45,w:type==='chat'?30:22,h:type==='chat'?48:20,visible:true}]);
+ const dragStart=(e:React.PointerEvent,w:CanvasWidget)=>{e.preventDefault();setSelected(w.id);const rect=canvas.current?.getBoundingClientRect();if(!rect)return;const sx=e.clientX,sy=e.clientY,ox=w.x,oy=w.y;const move=(ev:PointerEvent)=>setWidgets(list=>list.map(q=>q.id===w.id?{...q,x:Math.min(100-q.w,Math.max(0,ox+(ev.clientX-sx)/rect.width*100)),y:Math.min(100-q.h,Math.max(0,oy+(ev.clientY-sy)/rect.height*100))}:q));const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up)};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up)};
+ const save=async()=>{setSaving(true);const payload={name:'Overlay Full',enabled:true,data:{full:true,aspect:'16:9',widgets}};try{if(resourceId)await api.updateResource('overlay',resourceId,payload);else{const r=await api.createResource('overlay',payload);setResourceId(r.id)}}finally{setSaving(false)}};
+ const sel=widgets.find(w=>w.id===selected); const url=token?`${location.origin}/overlay/?user=${token.userId}&token=${token.token}&widget=layout`:'';
+ return <div className="page-stack"><Card><div className="card-head"><div><h3>Overlay Full 16:9</h3><p>Una única URL para OBS con todos los elementos ubicados en un solo lienzo.</p></div><Button kind="primary" onClick={save} disabled={saving}>{saving?'Guardando…':'Guardar layout'}</Button></div><div className="canvas-toolbar">{['alerts','chat','counter','stickers','sounds','media','leaderboard'].map(t=><Button key={t} kind="ghost" onClick={()=>add(t)}>+ {t}</Button>)}</div><div ref={canvas} className="full-canvas">{widgets.map(w=><div onPointerDown={e=>dragStart(e,w)} key={w.id} className={cx('canvas-widget',selected===w.id&&'selected')} style={{left:`${w.x}%`,top:`${w.y}%`,width:`${w.w}%`,height:`${w.h}%`,opacity:w.visible?1:.35}}><span>{w.label}</span></div>)}</div>{sel&&<div className="widget-properties"><Field label="Nombre"><input value={sel.label} onChange={e=>setWidgets(ws=>ws.map(w=>w.id===sel.id?{...w,label:e.target.value}:w))}/></Field><Field label="Ancho %"><input type="number" min="5" max="100" value={sel.w} onChange={e=>setWidgets(ws=>ws.map(w=>w.id===sel.id?{...w,w:Number(e.target.value)}:w))}/></Field><Field label="Alto %"><input type="number" min="5" max="100" value={sel.h} onChange={e=>setWidgets(ws=>ws.map(w=>w.id===sel.id?{...w,h:Number(e.target.value)}:w))}/></Field><label className="switch-line"><input type="checkbox" checked={sel.visible} onChange={e=>setWidgets(ws=>ws.map(w=>w.id===sel.id?{...w,visible:e.target.checked}:w))}/>Visible</label><Button kind="danger" onClick={()=>{setWidgets(ws=>ws.filter(w=>w.id!==sel.id));setSelected('')}}>Eliminar del lienzo</Button></div>}</Card><UrlCard title="URL única Overlay Full" url={url}/></div>
+}
+function UrlCard({title,url}:{title:string;url:string}){return <Card><div className="card-head"><div><h3>{title}</h3><p>Pega esta URL como Fuente de navegador en OBS.</p></div></div><div className="url-line"><input readOnly value={url}/><Button onClick={()=>navigator.clipboard.writeText(url)}>Copiar</Button></div></Card>}
+function MultiChatView(){const [t,setT]=useState<any>(null);useEffect(()=>{api.overlayToken().then(setT)},[]);const url=t?`${location.origin}/overlay/?user=${t.userId}&token=${t.token}&widget=chat`:'';return <div className="page-stack"><UrlCard title="Multi Chat · URL independiente" url={url}/><Card><div className="chat-preview"><div className="fake-chat twitch"><b>viewer_twitch</b><span>Hola desde Twitch 💜</span></div><div className="fake-chat youtube"><b>viewer_youtube</b><span>Nuevo Super Chat · $5</span></div><div className="fake-chat kick"><b>viewer_kick</b><span>Regaló una sub</span></div><div className="fake-chat tiktok"><b>viewer_tiktok</b><span>🎁 Rose × 20</span></div></div><p className="muted">El overlay recibe mensajes, emotes y eventos unificados por WebSocket. La presentación final depende de los datos disponibles en cada conector.</p></Card></div>}
+function LeaderboardView(){const [rows,setRows]=useState<any[]>([]);useEffect(()=>{api.leaderboard().then(r=>setRows(r.items))},[]);return <Card><div className="card-head"><div><h3>Leaderboard</h3><p>Ranking conjunto de espectadores y sus puntos gratuitos.</p></div></div><div className="table-wrap"><table><thead><tr><th>#</th><th>Usuario</th><th>Plataforma</th><th>Points</th><th>Coins</th></tr></thead><tbody>{rows.map((r,i)=><tr key={`${r.platform}:${r.platform_user_id}`}><td><b>{i+1}</b></td><td>{r.display_name}</td><td><Badge tone={r.platform}>{PLATFORM_LABEL[r.platform as Platform]}</Badge></td><td>{Number(r.points).toLocaleString()}</td><td>{Number(r.coins).toLocaleString()}</td></tr>)}</tbody></table></div></Card>}
+function LoyaltySettingsView(){const [item,setItem]=useState<Resource|null>(null),[name,setName]=useState('Points'),[tick,setTick]=useState<Record<string,number>>({twitch:10,youtube:10,kick:10,tiktok:10}),[chatPoints,setChatPoints]=useState(1),[busy,setBusy]=useState(false);useEffect(()=>{api.resources('loyalty-setting').then(r=>{const x=r.items[0];if(x){setItem(x);setName(x.data.pointName||'Points');setTick({...tick,...x.data.perTick});setChatPoints(Number(x.data.chatPoints||0))}})},[]);const save=async()=>{setBusy(true);const p={name:'Loyalty principal',enabled:true,data:{pointName:name,perTick:tick,chatPoints,gamesEnabled:true,commandsEnabled:true}};item?await api.updateResource('loyalty-setting',item.id,p):setItem({...p,id:(await api.createResource('loyalty-setting',p)).id,kind:'loyalty-setting'} as any);setBusy(false)};return <Card><div className="card-head"><div><h3>Loyalty Settings</h3><p>Configura los puntos gratuitos del canal.</p></div></div><div className="settings-form"><Field label="Cómo se llaman los puntos"><input value={name} onChange={e=>setName(e.target.value)}/></Field><Field label="Puntos por mensaje activo"><input type="number" value={chatPoints} onChange={e=>setChatPoints(Number(e.target.value))}/></Field><div className="field"><span>Puntos por tick de presencia / tiempo</span><div className="platform-values">{PLATFORMS.map(p=><label key={p}><span>{PLATFORM_LABEL[p]}</span><input type="number" value={tick[p]} onChange={e=>setTick(t=>({...t,[p]:Number(e.target.value)}))}/></label>)}</div><small>El agente/conector genera ticks donde la plataforma permite observar presencia de forma fiable.</small></div><Button kind="primary" onClick={save} disabled={busy}>Guardar Loyalty</Button></div></Card>}
+const COIN_EVENTS:{platform:Platform;event:string;label:string;mode:'fixed'|'amount'}[]=[{platform:'twitch',event:'bits',label:'Bits',mode:'amount'},{platform:'twitch',event:'sub',label:'Sub Twitch',mode:'fixed'},{platform:'twitch',event:'gift_sub',label:'Gift Sub Twitch',mode:'fixed'},{platform:'youtube',event:'super_chat',label:'Super Chat',mode:'amount'},{platform:'youtube',event:'super_sticker',label:'Super Sticker',mode:'amount'},{platform:'youtube',event:'membership',label:'Membresía YouTube',mode:'fixed'},{platform:'kick',event:'sub',label:'Sub Kick',mode:'fixed'},{platform:'kick',event:'gift_sub',label:'Gift Sub Kick',mode:'fixed'},{platform:'tiktok',event:'gift',label:'Regalos / Coins TikTok',mode:'amount'},{platform:'tiktok',event:'sub',label:'Suscripción TikTok',mode:'fixed'}];
+function CoinSettingsView(){const [item,setItem]=useState<Resource|null>(null),[coinName,setCoinName]=useState('Coins'),[rules,setRules]=useState<Record<string,any>>({}),[busy,setBusy]=useState(false);useEffect(()=>{api.resources('coin-setting').then(r=>{const x=r.items[0];if(x){setItem(x);setCoinName(x.data.coinName||'Coins');setRules(x.data.rules||{})}})},[]);const setRule=(key:string,mode:'fixed'|'amount',value:number)=>setRules(r=>({...r,[key]:mode==='amount'?{perAmount:value}:{fixed:value}}));const getRule=(key:string,mode:'fixed'|'amount')=>Number(mode==='amount'?rules[key]?.perAmount??0:rules[key]?.fixed??0);const save=async()=>{setBusy(true);const p={name:'Coin principal',enabled:true,data:{coinName,rules}};item?await api.updateResource('coin-setting',item.id,p):setItem({...p,id:(await api.createResource('coin-setting',p)).id,kind:'coin-setting'} as any);setBusy(false)};return <Card><div className="card-head"><div><h3>Coin Settings</h3><p>Convierte eventos que representan dinero/apoyo en la moneda interna del canal.</p></div></div><div className="settings-form"><Field label="Nombre de la moneda"><input value={coinName} onChange={e=>setCoinName(e.target.value)}/></Field><div className="coin-rule-grid">{COIN_EVENTS.map(r=>{const key=`${r.platform}:${r.event}`;return <div className="coin-rule" key={key}><span className={`platform-mark ${r.platform}`}><i className={`pi ${PLATFORM_ICON[r.platform]}`}/></span><div className="grow"><b>{r.label}</b><small>{r.mode==='amount'?'Coins por cada unidad/valor recibido':'Coins por cada evento'}</small></div><input type="number" min="0" value={getRule(key,r.mode)} onChange={e=>setRule(key,r.mode,Number(e.target.value))}/></div>})}</div><Button kind="primary" onClick={save} disabled={busy}>Guardar Coin</Button></div></Card>}
+function CoinPaysView(){const [rows,setRows]=useState<any[]>([]);useEffect(()=>{api.pays().then(r=>setRows(r.items))},[]);const map=Object.fromEntries(rows.map(x=>[x.platform,x]));return <div className="page-stack"><div className="stats-grid">{PLATFORMS.map(p=><Card key={p}><div className="stat-head"><span className={`platform-mark ${p}`}><i className={`pi ${PLATFORM_ICON[p]}`}/></span><b>{PLATFORM_LABEL[p]}</b></div><div className="stat-value">{Number(map[p]?.coins||0).toLocaleString()}</div><small>Coins generados</small><div className="mini-row"><span>{Number(map[p]?.events||0)} pagos/eventos</span><span>{Number(map[p]?.reported_amount||0).toLocaleString()} reportado</span></div></Card>)}</div></div>}
+function AccountSettings(){const [s,setS]=useState<Record<string,any>>({}),[saved,setSaved]=useState(false);useEffect(()=>{api.settings().then(r=>setS(r.settings))},[]);const save=async()=>{await api.saveSettings(s);setSaved(true);setTimeout(()=>setSaved(false),1500)};return <Card><div className="card-head"><div><h3>Configuración de tu MonaWorld</h3><p>Estos ajustes se guardan únicamente para tu usuario.</p></div></div><div className="settings-form"><Field label="Nombre visible del canal"><input value={s.channelName||''} onChange={e=>setS(x=>({...x,channelName:e.target.value}))}/></Field><Field label="Zona horaria"><input value={s.timezone||'America/Santiago'} onChange={e=>setS(x=>({...x,timezone:e.target.value}))}/></Field><Field label="Moneda de reportes"><input value={s.reportCurrency||'CLP'} onChange={e=>setS(x=>({...x,reportCurrency:e.target.value.toUpperCase()}))}/></Field><Button kind="primary" onClick={save}>{saved?'Guardado ✓':'Guardar configuración'}</Button></div></Card>}
+
+function AppShell({user,onLogout}:{user:User;onLogout:()=>void}){const [view,setView]=useState<ViewId>('dashboard');let content:any;switch(view){case'dashboard':content=<DashboardView/>;break;case'activity':content=<ActivityView/>;break;case'revenue':content=<RevenueView/>;break;case'connections':content=<ConnectionsView/>;break;case'commands':content=<CommandsView/>;break;case'timers':content=<TimersView/>;break;case'counters':content=<CountersView/>;break;case'spam':content=<SpamView/>;break;case'banned':content=<BannedView/>;break;case'bot-settings':content=<BotSettingsView/>;break;case'overlays':content=<OverlaysView/>;break;case'overlay-full':content=<OverlayFullView/>;break;case'media-request':content=<MediaRequestView/>;break;case'stickers':content=<StickersView/>;break;case'sounds':content=<SoundsView/>;break;case'alerts':content=<AlertsView/>;break;case'multichat':content=<MultiChatView/>;break;case'leaderboard':content=<LeaderboardView/>;break;case'loyalty-settings':content=<LoyaltySettingsView/>;break;case'coin-settings':content=<CoinSettingsView/>;break;case'coin-pays':content=<CoinPaysView/>;break;default:content=<AccountSettings/>}return <div className="app-shell"><Sidebar view={view} setView={setView} user={user} onLogout={onLogout}/><main className="app-main"><Topbar view={view}/><div className="page">{content}</div></main></div>}
+
+export function App(){const [user,setUser]=useState<User|null>(null),[ready,setReady]=useState(false);const refresh=()=>api.me().then(r=>setUser(r.user)).catch(()=>setUser(null)).finally(()=>setReady(true));useEffect(()=>{void refresh()},[]);if(!ready)return <div className="splash"><img src="/mona-fire.gif"/><span>Cargando MonaWorld…</span></div>;if(!user)return <Landing onAuth={refresh}/>;return <AppShell user={user} onLogout={async()=>{await api.logout();setUser(null)}}/>}
