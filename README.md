@@ -140,3 +140,5 @@ npm test
 ```
 
 Para desplegar el Worker usa `wrangler deploy`; no uses `wrangler versions upload` para este proyecto con Durable Objects.
+MonaWorld 8 deployment
+
